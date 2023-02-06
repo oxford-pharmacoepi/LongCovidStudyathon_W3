@@ -10,6 +10,8 @@ library("CDMConnector")
 library("here")
 library("log4r")
 library("zip")
+library("poLCA")
+library("igraph")
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
@@ -52,16 +54,14 @@ study_start_date <- as.Date("2020-09-01")
 covid_end_date <- as.Date("2022-09-01")
 
 # Decide which parts of the study you want to run 
-instantiateInitialCohorts <- TRUE
+readInitialCohorts <- TRUE
 getStudyCohorts <- TRUE
 doIncidencePrevalence <- TRUE
 doCharacterisation <- TRUE
 doDrugUtilisation <- TRUE
 doTreatmentPatterns <- TRUE
-doClusteringLCA <- TRUE
-doClusteringNetwork <- TRUE
+doClustering <- TRUE
 doTrajectories <- TRUE
-
 # Run the study
 source(here("RunStudy.R"))
 

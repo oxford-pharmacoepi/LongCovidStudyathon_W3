@@ -15,8 +15,8 @@ level(logger) <- "INFO"
 #source(here("parameters.R"))
 #source(here("functions.R"))
 
-# Instantiate study cohorts
-if (instantiateInitialCohorts){
+# Read initial cohorts
+if (readInitialCohorts){
   info(logger, 'INSTANTIATING INITIAL COHORTS')
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema)
   source(here("1_InitialCohorts", "InstantiateStudyCohorts.R"), local=TRUE)
@@ -28,6 +28,8 @@ if (instantiateInitialCohorts){
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = cohort_table_name)
   info(logger, 'INITIAL COHORTS READ')
 }
+
+# Instantiate study cohorts
 if(getStudyCohorts) {
   info(logger, 'GETTING STUDY COHORTS')
   source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
@@ -35,46 +37,39 @@ if(getStudyCohorts) {
 }
 
 # Objective 1: Incidence and Prevalence
-#if(doIncidencePrevalence) {
-#  info(logger, 'GETTING INCIDENCE AND PREVALENCE')
-#  source(here("3_IncidencePrevalence","IncidencePrevalence.R"), local = TRUE)
-#  info(logger, 'GOT INCIDENCE AND PREVALENCE')
-#}
+if(doIncidencePrevalence) {
+  info(logger, 'GETTING INCIDENCE AND PREVALENCE')
+  source(here("3_IncidencePrevalence","WP1_code.R"), local = TRUE)
+  info(logger, 'GOT INCIDENCE AND PREVALENCE')
+}
 
 # Objective 2a: Characterisation
 #if(doCharacterisation) {
 #  info(logger, 'DOING LARGE-SCALE CHARACTERISATION')
-#  source(here("4_Characterisation","LargeScaleCharacterisation.R"), local = TRUE)
+#  source(here("4_Characterisation","WP2a_code.R"), local = TRUE)
 #  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION')
 #}
 
 # Objective 2b: Drug Utilisation
 #if(doDrugUtilisation) {
 #  info(logger, 'LOOKING AT DRUG UTILISATION')
-#  source(here("4_Characterisation","DrugUtilisation.R"), local = TRUE)
+#  source(here("4_Characterisation","WP2b_code.R"), local = TRUE)
 #  info(logger, 'FINISHED DRUG UTILISATION')
 #}
 
 # Objective 2c: Treatment Patterns
 #if(doTreatmentPatterns) {
 #  info(logger, 'COMPUTING TREATMENT PATTERNS')
-#  source(here("4_Characterisation","TreatmentPatterns.R"), local = TRUE)
+#  source(here("4_Characterisation","WP2c_code.R"), local = TRUE)
 #  info(logger, 'FINISHED TREATMENT PATTERNS')
 #}
 
-# Objective 3a: Clustering LCA
-#if(doClusteringLCA) {
-#  info(logger, 'PERFORMING LCA CLUSTERING')
-#  source(here("5_Clustering","LCA.R"), local = TRUE)
-#  info(logger, 'FINISHED LCA CLUSTERING')
-#}
-
-# Objective 3b: Clustering network
-#if(doClusteringNetwork) {
-#  info(logger, 'PERFORMING NETWORK CLUSTERING')
-#  source(here("5_Clustering","Network.R"), local = TRUE)
-#  info(logger, 'FINISHED NETWORK CLUSTERING')
-#}
+# Objective 3a: Clustering
+if(doClustering) {
+  info(logger, 'PERFORMING LCA CLUSTERING')
+  source(here("5_Clustering","WP3_code.R"), local = TRUE)
+  info(logger, 'FINISHED LCA CLUSTERING')
+}
 
 # Objective 3c: Trajectories
 #if(doTrajectories) {

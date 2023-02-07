@@ -44,11 +44,11 @@ if(doIncidencePrevalence) {
 }
 
 # Objective 2a: Characterisation
-#if(doCharacterisation) {
-#  info(logger, 'DOING LARGE-SCALE CHARACTERISATION')
-#  source(here("4_Characterisation","WP2a_code.R"), local = TRUE)
-#  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION')
-#}
+if(doCharacterisation) {
+  info(logger, 'DOING LARGE-SCALE CHARACTERISATION')
+  source(here("4_Characterisation","WP2a_code.R"), local = TRUE)
+  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION')
+}
 
 # Objective 2b: Drug Utilisation
 #if(doDrugUtilisation) {

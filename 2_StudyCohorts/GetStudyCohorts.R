@@ -1,18 +1,22 @@
 # From initial cohorts, get base and outcome cohorts for the study
 # Get attrition too
 
+# SHOULD PUT LOGGER
+
 # get functions used throughout this script
-source(here("functions_getCohorts.R"))
+source(here("2_StudyCohorts","functions_getCohorts.R"))
 
 # observation period + death table
 observation_death <- cdm$observation_period %>%
-  select(person_id, observation_period_end_date) %>%
-  left_join(cdm$death %>% select (person_id, death_date), by = "person_id") %>%
+  dplyr::select("subject_id" = "person_id", "observation_period_end_date") %>%
+  left_join(cdm$death %>% dplyr::select("subject_id" = "person_id", "death_date"), by = "subject_id") %>%
   mutate(death = ifelse(!(is.na(death_date)), 1,0)) %>%
   compute()
 
 # ---------------------------------------------------------------------
 # BASE COHORTS
+
+message("Getting base cohorts")
 
 # QUESTION Do we censor cohorts 1 and 2 for COVID?
 
@@ -20,25 +24,25 @@ observation_death <- cdm$observation_period %>%
 info(logger, 'GETTING BASE COHORTS')
 newinf_init <- cdm[[cohort_table_name]] %>% 
   dplyr::filter(.data$cohort_definition_id == 1) %>% dplyr::select(
-    "person_id" = "subject_id",
+    "subject_id",
     "cohort_start_date"
   ) %>% compute() 
 
 negative_init <- cdm[[cohort_table_name]] %>% 
   dplyr::filter(.data$cohort_definition_id == 3) %>% dplyr::select(
-    "person_id" = "subject_id",
+    "subject_id",
     "cohort_start_date"
   ) %>% compute() 
 
 censorcovid_init <- cdm[[cohort_table_name]] %>% 
   dplyr::filter(.data$cohort_definition_id == 2) %>% dplyr::select(
-    "person_id" = "subject_id",
+    "subject_id",
     "cohort_start_date"
   ) %>% compute() 
 
 influenza_init <- cdm[[cohort_table_name]] %>% 
   dplyr::filter(.data$cohort_definition_id == 4) %>% dplyr::select(
-    "person_id" = "subject_id",
+    "subject_id",
     "cohort_start_date"
   ) %>% compute() 
 
@@ -48,19 +52,19 @@ influenza <- do_exclusion(influenza_init, id = 4, "cohort_start_date", S_start_d
   
 # New infection "final": inclusion/exclusion
 new_infection <- covid[[1]]
-new_infection <- new_infection %>% mutate(cohort_definition_id = 1) %>% select(person_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+new_infection <- new_infection %>% mutate(cohort_definition_id = 1) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Reinfection
 reinfection <- covid[[2]]
-reinfection <- reinfection %>% mutate(cohort_definition_id = 2) %>% select(person_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+reinfection <- reinfection %>% mutate(cohort_definition_id = 2) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Tested negative "final"
 negativetest <- nocovid[[1]]
-negativetest <- negativetest %>% mutate(cohort_definition_id = 3) %>% select(person_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+negativetest <- negativetest %>% mutate(cohort_definition_id = 3) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Influenza
 flu <- influenza[[1]]
-flu <- flu %>% mutate(cohort_definition_id = 4) %>% select(person_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+flu <- flu %>% mutate(cohort_definition_id = 4) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Attritions
 attrition_positive <- covid[[3]]
@@ -78,12 +82,14 @@ appendPermanent(flu, name = "studyathon_final_cohorts",  schema = results_databa
 
 write.csv(
   attrition,
-  file = here::here(Results, "attrition_studies.csv"),
+  file = here::here(output.folder, "attrition_studies.csv"),
   row.names = FALSE
 )
 
 # ---------------------------------------------------------------------
 # OUTCOME COHORTS
+
+message("Getting outcome cohorts")
 
 # QUESTION Washout for outcome and intersection? Annika: all for PASC/MC, 180(intersection)/365(alone) for symptoms
 # QUESTION How to treat repeated events, both for Characterisation and IP?
@@ -116,11 +122,13 @@ create_outcome(window = c(40:59))
 # ---------------------------------------------------------------------
 # STRATA COHORTS
 
+message("Getting strata cohorts")
+
 # QUESTION How we define vaccinated strata (any/brands, doses...)?
 
 # Vaccinated people
 create_outcome(window = c(60:63))
-crate_any_cohort(c(60:63), 103)
+crate_any_vacc_cohort(c(60:63), 103)
 
 # Update cdm
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
@@ -128,17 +136,19 @@ cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema
 # ---------------------------------------------------------------------
 # OVERLAPPING COHORTS CHARACTERISATION
 
+message("Getting overlapping cohorts")
+
 # LC any symptom + Infection
-do_overlap(1, 100, 104)
+do_overlap(1, 100, 105)
 
 # LC any symptom + Reinfection
-do_overlap(2, 100, 105)
+do_overlap(2, 100, 106)
 
 # LC any symptom + Test negative
-do_overlap(3, 100, 106)
+do_overlap(3, 100, 107)
 
 # LC any symptom + Influenza
-do_overlap(4, 100, 107)
+do_overlap(4, 100, 108)
 
 # LC code + Infection
 # id 108
@@ -153,18 +163,24 @@ do_overlap(4, 100, 107)
 # id 111
 
 # PASC any symptom + Infection
-do_overlap(1, 102, 112, washout = FALSE)
+do_overlap(1, 102, 113, washout = FALSE)
 
 # PASC any symptom + Reinfection
-do_overlap(2, 102, 113, washout = FALSE)
+do_overlap(2, 102, 114, washout = FALSE)
 
 # PASC any symptom + Test negative
-do_overlap(3, 102, 114, washout = FALSE)
+do_overlap(3, 102, 115, washout = FALSE)
 
 # PASC any symptom + Influenza
-do_overlap(4, 102, 115, washout = FALSE)
+do_overlap(4, 102, 116, washout = FALSE)
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
+
+# Base cohorts plus vaccination
+do_overlap_vacc(1,117)
+do_overlap_vacc(2,119)
+do_overlap_vacc(3,121)
+do_overlap_vacc(3,123)
 
 # -------------------------------------------------------------------
 

@@ -36,10 +36,10 @@ do_sex_strata <- function(cohort_id,new_id) {
   appendPermanent(females, name = "studyathon_final_cohorts",  schema = results_database_schema)
   appendPermanent(males, name = "studyathon_final_cohorts",  schema = results_database_schema)
 }
-id_new_sex <- c(seq(116,146,2)) # only odd numbers!!!
+id_new_sex <- c(seq(125,155,2)) # only odd numbers!!!
 lapply(cohort_ids_interest,id_new_sex,do_sex_strata)
 
-charac_sex <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(116:147))
+charac_sex <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(125:156))
 write.csv(
   charac_sex,
   file = here::here(output_lsc, "Characterisation_sex"),
@@ -67,10 +67,10 @@ do_age_strata <- function(cohort_id,new_id) {
   appendPermanent(age7, name = "studyathon_final_cohorts",  schema = results_database_schema)
   appendPermanent(age8, name = "studyathon_final_cohorts",  schema = results_database_schema)
 }
-id_new_age <- c(seq(148,268,8))
+id_new_age <- c(seq(157,277,8))
 lapply(cohort_ids_interest,id_new_age,do_age_strata)
 
-charac_age <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(148:275))
+charac_age <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(157:284))
 write.csv(
   charac_age,
   file = here::here(output_lsc, "Characterisation_age"),

@@ -46,7 +46,7 @@ influenza_init <- cdm[[cohort_table_name]] %>%
     "cohort_start_date"
   ) %>% compute() 
 
-covid <- do_exclusion(newinf_init, id = 1, "cohort_start_date", S_start_date = study_start_date)
+covid <- do_exclusion(newinf_init, id = 1, "cohort_start_date", S_start_date = study_start_date, covidcensor = FALSE)
 nocovid <- do_exclusion(negative_init, id = 3, "cohort_start_date", S_start_date = study_start_date)
 influenza <- do_exclusion(influenza_init, id = 4, "cohort_start_date", S_start_date = as.Date("2017-09-01"))
   
@@ -127,8 +127,41 @@ message("Getting strata cohorts")
 # QUESTION How we define vaccinated strata (any/brands, doses...)?
 
 # Vaccinated people
-create_outcome(window = c(60:63))
-crate_any_vacc_cohort(c(60:63), 103)
+vaccinated <- cdm[[cohort_table_name]] %>%
+  dplyr::filter(cohort_definition_id %in% c(60:63)) %>%
+  dplyr::select(
+    "subject_id",
+    "cohort_start_date",
+    "cohort_definition_id"
+  ) %>% group_by(subject_id) %>% arrange(.data$cohort_start_date) %>%
+  mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
+# Only one and more than one dose
+vaccinated_multiple <- vaccinated %>%
+  dplyr::filter(seq != 1) %>% compute()
+vaccinated_first <- vaccinated %>%
+  dplyr::filter(seq == 1) %>% compute()
+vaccinated_JJ <- vaccinated_first %>% dplyr::filter(cohort_definition_id == 61) %>%
+  compute()
+# Cohort fully vaccinated (one JJ dose or two any doses), add 14 days to vaccination day for full coverage
+vaccinated <- vaccinated_JJ %>% dplyr::union(vaccinated_multiple) %>%
+  dplyr::rename(vacc_date = cohort_start_date) %>%
+  dplyr::group_by(subject_id) %>%
+  dplyr::summarise(
+    cohort_start_date = min(vacc_date, na.rm = TRUE)
+  ) %>% dplyr::mutate(cohort_definition_id = 103) %>%
+  left_join(observation_death, by = c("subject_id")) %>%
+  mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>%
+  mutate(cohort_start_date = cohort_start_date + lubridate::days(14)) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
+  dplyr::compute()
+# Other individuals in the database are not fully vaccinated
+nonvaccinated <- cdm$person %>% mutate(subject_id = person_id) %>% 
+  anti_join(vaccinated, by = subject_id) %>% mutate(cohort_definition_id = 104) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
+  compute()
+
+appendPermanent(vaccinated, name = "studyathon_final_cohorts",  schema = results_database_schema)
+appendPermanent(nonvaccinated, name = "studyathon_final_cohorts",  schema = results_database_schema)
 
 # Update cdm
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
@@ -151,16 +184,16 @@ do_overlap(3, 100, 107)
 do_overlap(4, 100, 108)
 
 # LC code + Infection
-# id 108
-
-# LC code + Reinfection
 # id 109
 
-# LC code + Test negative
+# LC code + Reinfection
 # id 110
 
-# LC code + Influenza
+# LC code + Test negative
 # id 111
+
+# LC code + Influenza
+# id 112
 
 # PASC any symptom + Infection
 do_overlap(1, 102, 113, washout = FALSE)
@@ -176,13 +209,28 @@ do_overlap(4, 102, 116, washout = FALSE)
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
 
-# Base cohorts plus vaccination
+# Base cohorts plus vaccination or non vaccination
 do_overlap_vacc(1,117)
 do_overlap_vacc(2,119)
 do_overlap_vacc(3,121)
 do_overlap_vacc(3,123)
 
-# -------------------------------------------------------------------
+# Overlapping cohorts of single symptoms / events / medical conditions with base cohorts
+# Cohort_definition if is id_base*200 + id_medical/symptom -> e.g. cough and influenza is 812
+base_ids <- c(1:4)
+outcome_ids <- c(5:59)
+for(i in base_ids) {
+  for(j in outcome_ids){
+    do_overlap(i, j, i*200+j)
+  }
+}
 
-# Think: do we need overlapping cohorts of single symptoms + base? Or medical conditions + base? 
-# If so, id base*100 + medical/symptom -> e.g. cough and influenza is 412
+# -------------------------------------------------------------------
+# OTHER VACCINATION COHORTS AS OUTCOME FOR CHARACTERISATION?
+
+# 
+
+
+
+
+

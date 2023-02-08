@@ -102,7 +102,6 @@ E(ig)$width <- 10*E(ig)$weight
 # https://kateto.net/netscix2016.html
 plot(ig)
 
-
 # community detection: MCA?
 
 

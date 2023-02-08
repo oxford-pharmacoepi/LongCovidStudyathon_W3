@@ -14,8 +14,6 @@ output_ip <- here::here(output.folder,"IP")
   if (!file.exists(output_ip)){
     dir.create(output_ip, recursive = TRUE)}
 
-# QUESTION What is the strata for calendar period (relating to VOC)?
-
 # ----------------------------------------------------------------
 # 1a: PASC, LC and MC on base cohorts
 # calendar_strata <- c("2020-09-01", "2021-12-01", "2022-12-01") # not needed here as we calculate IP monthly, etc.

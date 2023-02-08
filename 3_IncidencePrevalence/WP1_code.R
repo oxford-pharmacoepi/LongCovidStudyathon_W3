@@ -1,5 +1,12 @@
 # WP1: Incidence and Prevalence
 
+# no outcome washout
+# no complete dataset or full contribution
+# repeated events no
+# look back 0
+
+# What about end date??
+
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
 
 # Output folder for WP1
@@ -34,18 +41,10 @@ calculate_IP <- function(base_id,outcome_id) {
   message("- Outcome")
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-    repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
+    repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
   message("- Incidence")
   
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-    timePoint = "start",minCellCount = 5)
-  message("- Point prevalence")
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-    completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  message("- Period prevalence")
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
   message("- Study results gathered")
   
   IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_id,"_AllandSex"), outputFolder=output_ip) 
@@ -65,15 +64,9 @@ calculate_IP <- function(base_id,outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
   IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_id,"_Age"), outputFolder=output_ip) 
   
   vacc_id <- ifelse(base_id == 1, 116, ifelse(base_id == 2, 118, ifelse(base_id == 3, 120, ifelse(base_id == 4, 122, NA))))
@@ -90,17 +83,10 @@ calculate_IP <- function(base_id,outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
-  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_name,"_Vacc"), outputFolder=output_ip) 
-  
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
+  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_id,"_Vacc"), outputFolder=output_ip) 
   
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
     cdm =  cdm,
@@ -112,21 +98,15 @@ calculate_IP <- function(base_id,outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
-  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_name,"NonVacc"), outputFolder=output_ip) 
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
+  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0(base_name,"_",outcome_id,"NonVacc"), outputFolder=output_ip) 
   
 }
 
 base_cohorts_id <- c(1:4)
-outcome_cohorts_id <- c(5:59,100:102,104:107,112:115) # both only outcome and outcome+base overlap
+outcome_cohorts_id <- c(5:59,100:102) # only outcome
 IP_1a <- Map(calculate_IP,base_cohorts_id,outcome_cohorts_id)
 
 
@@ -146,16 +126,10 @@ calculate_IP_allpop <- function(outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
-  exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_name,"_AllandSex"), outputFolder=output_ip) 
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
+  exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_id,"_AllandSex"), outputFolder=output_ip) 
   
   
   # Age strata
@@ -169,15 +143,9 @@ calculate_IP_allpop <- function(outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
   IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_id,"_Age"), outputFolder=output_ip) 
   
   
@@ -192,16 +160,10 @@ calculate_IP_allpop <- function(outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
-  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_name,"_Vacc"), outputFolder=output_ip) 
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
+  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_id,"_Vacc"), outputFolder=output_ip) 
   
   
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
@@ -214,20 +176,12 @@ calculate_IP_allpop <- function(outcome_id) {
   cdm$outcome <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == outcome_id)
   
   inc <- IncidencePrevalence::estimateIncidence(cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                           repeatedEvents = TRUE, outcomeWashout = 180, completeDatabaseIntervals = TRUE, minCellCount = 5)
-  
-  prev_point <- IncidencePrevalence::estimatePointPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome", interval = c("years","months"),
-                                        timePoint = "start",minCellCount = 5)
-  
-  prev_period <- IncidencePrevalence::estimatePeriodPrevalence(cdm = cdm,denominatorTable = "denominator", outcomeTable = "outcome",interval = c("years","months"),
-                                          completeDatabaseIntervals = TRUE, fullContribution = TRUE,minCellCount = 5)
-  
-  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc, prev_point, prev_period), databaseName = db.name)
-  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_name,"NonVacc"), outputFolder=output_ip) 
+                           repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
+
+  study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(cdm=cdm, resultList=list(inc), databaseName = db.name)
+  IncidencePrevalence::exportIncidencePrevalenceResults(result=study_results, zipName=paste0("Allpop_",outcome_id,"NonVacc"), outputFolder=output_ip) 
   
 }
 
-all_cohorts_id <- c(1:4,5:59,100:102,104:107,112:115) # base, only outcome and outcome+base overlap
+all_cohorts_id <- c(1:4,105:108,113:116,205:259,405:459,605:659,805:859) # base and outcome+base overlap. 109:112 missing, LC code
 IP_1b <- lapply(FUN = calculate_IP,all_cohorts_id)
-
-

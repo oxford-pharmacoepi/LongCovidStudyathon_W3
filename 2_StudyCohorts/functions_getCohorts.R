@@ -4,7 +4,7 @@ do_exclusion <- function(cohort, id, name_date_col, databefore = TRUE,
                          before_look = 365, dataafter = TRUE, after_look = 120,
                          influenza_preid = TRUE, influenza_look = 90,
                          covid_preid = TRUE, covid_look = NA,
-                         washout = 42, S_start_date
+                         washout = 42, S_start_date, covidcensor = TRUE
 ) {
   
   # function that applies exclusion criteria and gets attrition of specified cohort
@@ -34,7 +34,7 @@ do_exclusion <- function(cohort, id, name_date_col, databefore = TRUE,
   if(databefore) {
     # Prior history
     cohort <- cohort %>% CohortProfiles::addPriorHistory(cdm, priorHistoryAt = 
-               name_date_col) %>% compute() # it does not work with S_start_date (and ER does it with cohort_start_date too, so...??)
+               name_date_col) %>% compute() 
     # try again priorHistory with date etc
     cohort <- cohort %>% filter(prior_history >= before_look) %>% compute()
     attrition <- rbind(attrition, 
@@ -74,24 +74,40 @@ do_exclusion <- function(cohort, id, name_date_col, databefore = TRUE,
     compute()
   
   # Right now, everyone gets censored on covid. Susceptible to change
-  cohort <- cohort %>% CohortProfiles::addEvent(cdm, cohort_table_name, 
-            eventAt = name_date_col, filter = list(cohort_definition_id = 2), 
-            window = c(1,365), order = "first", name = "covid_censoring_date") %>% compute()
+  if(covidcensor) {
+    cohort <- cohort %>% CohortProfiles::addEvent(cdm, cohort_table_name, 
+                                                  eventAt = name_date_col, filter = list(cohort_definition_id = 2), 
+                                                  window = c(1,365), order = "first", name = "covid_censoring_date") %>% compute()
+    cohort <- cohort %>% mutate(cohort_end_date = lubridate::as_date(pmin(
+      observation_period_end_date, 
+      death_date, 
+      covid_censoring_date - lubridate::days(1), 
+      one_year_date,
+      end_covid_testing_date - lubridate::days(1),
+      na.rm = F))) %>%
+      mutate(follow_up_days = cohort_end_date - .data[[name_date_col]]) %>% 
+      mutate(reason_censoring = ifelse(!(is.na(covid_censoring_date)) & cohort_end_date == covid_censoring_date-lubridate::days(1), "COVID-19",
+                                       ifelse(!(is.na(death_date)) & cohort_end_date == death_date, "death",
+                                              ifelse(cohort_end_date == one_year_date, "one year of follow_up",
+                                                     ifelse(cohort_end_date == end_covid_testing_date, "End of COVID-19 testing",
+                                                            ifelse(cohort_end_date == observation_period_end_date,
+                                                                   "end of data collection or exit from database",NA )))))) %>% compute()
+  } else {
+    cohort <- cohort %>% mutate(cohort_end_date = lubridate::as_date(pmin(
+      observation_period_end_date, 
+      death_date, 
+      one_year_date,
+      end_covid_testing_date - lubridate::days(1),
+      na.rm = F))) %>%
+      mutate(follow_up_days = cohort_end_date - .data[[name_date_col]]) %>% 
+      mutate(reason_censoring = ifelse(!(is.na(death_date)) & cohort_end_date == death_date, "death",
+                                              ifelse(cohort_end_date == one_year_date, "one year of follow_up",
+                                                     ifelse(cohort_end_date == end_covid_testing_date, "End of COVID-19 testing",
+                                                            ifelse(cohort_end_date == observation_period_end_date,
+                                                                   "end of data collection or exit from database",NA ))))) %>% compute()
+  }
 
-  cohort <- cohort %>% mutate(cohort_end_date = lubridate::as_date(pmin(
-    observation_period_end_date, 
-    death_date, 
-    covid_censoring_date - lubridate::days(1), 
-    one_year_date,
-    end_covid_testing_date - lubridate::days(1),
-    na.rm = F))) %>%
-    mutate(follow_up_days = cohort_end_date - .data[[name_date_col]]) %>% 
-    mutate(reason_censoring = ifelse(!(is.na(covid_censoring_date)) & cohort_end_date == covid_censoring_date-lubridate::days(1), "COVID-19",
-                                     ifelse(!(is.na(death_date)) & cohort_end_date == death_date, "death",
-                                            ifelse(cohort_end_date == one_year_date, "one year of follow_up",
-                                                   ifelse(cohort_end_date == end_covid_testing_date, "End of COVID-19 testing",
-                                                          ifelse(cohort_end_date == observation_period_end_date,
-                                                                 "end of data collection or exit from database",NA )))))) %>% compute()
+ 
   
   if(dataafter) {
     # exclude if follow-up < specified days
@@ -155,11 +171,11 @@ do_overlap <- function(base_cohort_id, outcome_cohort_id, overlap_cohort_id, was
     dplyr::select(subject_id, outcome_date = cohort_start_date, outcome_end = cohort_end_date),
     by = "subject_id") %>% mutate(cohort_definition_id = overlap_cohort_id) %>%
     mutate(time_diff = CDMConnector::datediff("outcome_date","cohort_start_date")) %>%
-    filter(time_diff < -90 & time_diff > -366) %>% dplyr::select(-time_diff) %>% compute()
+    dplyr::filter(time_diff < -90 & time_diff > -366) %>% dplyr::select(-time_diff) %>% compute()
   
   if(washout) {
     overlap <- overlap %>% CohortProfiles::addEvent(cdm,"studyathon_final_cohorts", filter = list(cohort_definition_id = outcome_cohort_id), window = c(-180,-1), order = "last", eventAt = "cohort_start_date", eventDate = "cohort_start_date") %>%
-      filter(is.na(event)) %>% dplyr::select(-event) %>% compute()
+      dplyr::filter(is.na(event)) %>% dplyr::select(-event) %>% compute()
   }
 
   overlap <- overlap %>% mutate(cohort_end_date = pmin(cohort_end_date, outcome_date)) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>% compute()
@@ -167,7 +183,7 @@ do_overlap <- function(base_cohort_id, outcome_cohort_id, overlap_cohort_id, was
 }
 
 
-create_outcome <- function(window, filter_start = TRUE) {
+create_outcome <- function(window, filter_start = TRUE, first_event = TRUE) {
   for(i in window){
     name_cohort <- initialCohortSet$cohortName[i]
     current <- cdm[[cohort_table_name]] %>% 
@@ -180,49 +196,32 @@ create_outcome <- function(window, filter_start = TRUE) {
       current <- current %>% dplyr::filter(cohort_start_date > study_start_date) %>% compute()
     }
     
-    # How to deal with repeated events??
-    # current_symptom <- current_symptom %>% group_by(subject_id) %>% arrange(cohort_start_date) %>%
-    #  mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
+    if(first_event) {
+      # Only get the first event
+      current <- current %>% group_by(subject_id) %>% arrange(cohort_start_date) %>%
+        mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
+      current <- current %>% filter(seq == 1) %>% dplyr::select(-seq) %>% compute()
+    }
     
     current <- current %>% left_join(observation_death, by = c("subject_id")) %>%
       mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>% compute()
     
     current <- current %>% mutate(cohort_definition_id = i) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
     appendPermanent(current, name = "studyathon_final_cohorts",  schema = results_database_schema)
-    
-    #first_event <- cough %>% filter(seq == 1) %>% dplyr::select(-seq) %>% compute()
-    #subs_events <- cough %>% filter(seq != 1) %>% dplyr::select(-seq) %>% compute()
-  }
+   }
 }
 
 
 crate_any_cohort <- function(window, cohort_id) {
   cohorts <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id %in% window)
-  # people (381170) or events (441641)?
-  any_cohort <- cohorts %>% dplyr::select(-cohort_definition_id) %>% mutate(cohort_definition_id = cohort_id) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
-  
-  # group_by(subject_id, symptom_date) %>%
-  # keep date of first symptom recorded
-  # filter(cohort_end_date == min(cohort_end_date)) %>%
-  # ungroup()
-  
-  appendPermanent(any_cohort, name = "studyathon_final_cohorts",  schema = results_database_schema)
-}
-
-
-crate_any_vacc_cohort <- function(window, cohort_id) {
-  cohorts <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id %in% window)
-  # people (381170) or events (441641)?
-  any_cohort <- cohorts %>% dplyr::select(-cohort_definition_id) %>% mutate(cohort_definition_id = cohort_id) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
-  any_no_cohort <- cdm$person %>% mutate(subject_id = person_id) %>% anti_join(any_cohort, by = subject_id) %>% mutate(cohort_definition_id = cohort_id+1) %>%dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
-  # group_by(subject_id, symptom_date) %>%
-  # keep date of first symptom recorded
-  # filter(cohort_end_date == min(cohort_end_date)) %>%
-  # ungroup()
+  any_cohort <- cohorts %>% dplyr::select(-cohort_definition_id) %>%
+    group_by(subject_id) %>% arrange(.data$cohort_start_date) %>%
+    dplyr::mutate(seq = row_number()) %>% distinct() %>% 
+    dplyr::filter(seq == 1) %>% ungroup() %>%
+    dplyr::mutate(cohort_definition_id = cohort_id) %>% 
+    dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
   
   appendPermanent(any_cohort, name = "studyathon_final_cohorts",  schema = results_database_schema)
-  appendPermanent(any_no_cohort, name = "studyathon_final_cohorts",  schema = results_database_schema)
-  
 }
 
 

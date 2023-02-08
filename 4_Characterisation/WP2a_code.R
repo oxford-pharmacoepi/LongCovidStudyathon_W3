@@ -1,10 +1,18 @@
 # Large-scale characterisation part
 # Only for base cohorts and for LC any / LC code / PASC any in overlap
 
-# Output folder for WP2
+# Output folders for WP2
 output_lsc <- here::here(output.folder,"Large-scale Characterisation")
 if (!file.exists(output_lsc)){
   dir.create(output_lsc, recursive = TRUE)}
+
+output_du <- here::here(output.folder,"Drug Utilisation")
+if (!file.exists(output_du)){
+  dir.create(output_du, recursive = TRUE)}
+
+output_tp <- here::here(output.folder,"Treatment Patterns")
+if (!file.exists(output_tp)){
+  dir.create(output_tp, recursive = TRUE)}
 
 # Should choose which temporalWindows, tables to Characterize, etc.
 # Default temporalWindows =
@@ -18,9 +26,13 @@ if (!file.exists(output_lsc)){
 #  "procedure_occurrence", "measurement"
 
 # -------------------------------------------------------------------
-cohort_ids_interest <-  c(1:4,104:115)
+# Cohorts to characterise
+cohort_ids_interest <-  c(1:4,105:116) # 109 to 112 missing (LC code)
 
-# Characterisation without strata
+# -------------------------------------------------------------------
+# CHARACTERISATION NO STRATA
+
+# Large scale characterisation
 charac <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = cohort_ids_interest)
 write.csv(
   charac,
@@ -28,7 +40,46 @@ write.csv(
   row.names = FALSE
 )
 
-# Characterisation sex strata
+# Vaccination, Healthcare Utilisation
+
+# Drug Utilisation: not available yet
+
+# Treatment Patterns
+dataSettings <- TreatmentPatterns::createDataSettings(connectionDetails, 
+                                      cdmDatabaseSchema = cdm_database_schema, 
+                                      cohortDatabaseSchema = results_database_schema,
+                                      cohortTable = "studyathon_final_cohorts")
+cohorts_interest <- as.data.frame(tibble::tibble(cohortName = c("Infection", 
+                                                                "Reinfection", 
+                                                                "Negative", 
+                                                                "Flu", 
+                                                                "Any_LC_inf", 
+                                                                "Any_LC_reinf", 
+                                                                "Any_LC_neg", 
+                                                                "Any_LC_flu",
+                                                                "LC_code_inf",
+                                                                "LC_code_reinf",
+                                                                "LC_code_neg",
+                                                                "LC_code_flu",
+                                                                "Any_PASC_inf",
+                                                                "Any_PASC_reinf",
+                                                                "Any_PASC_neg",
+                                                                "Any_PASC_flu"),
+                                                 cohortId = cohort_ids_interest),
+                                  eventCohorts = dataframetodo)
+# https://github.com/mi-erasmusmc/TreatmentPatterns/blob/master/docs/TreatmentPatternsStudy.pdf
+cohortSettings <- TreatmentPatterns::createCohortSettings()
+pathwaySettings <- TreatmentPatterns::createPathwaySettings()
+saveSettings <- TreatmentPatterns::createSaveSettings()
+TreatmentPatterns::executeTreatmentPatterns(dataSettings, cohortSettings,
+                                            pathwaySettings, saveSettings)
+#TreatmentPatterns::launchResultsExplorer()
+# Also create sunburn plot, etc.
+
+# -------------------------------------------------------------------
+# CHARACTERISATION SEX STRATA
+
+# Large scale characterisation
 do_sex_strata <- function(cohort_id,new_id) {
   sex_strata <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == cohort_id)
   females <- sex_strata %>% CohortProfiles::addSex(cdm) %>% dplyr::filter(sex == "Female") %>% mutate(cohort_definition_id = new_id)
@@ -46,7 +97,16 @@ write.csv(
   row.names = FALSE
 )
 
-# Characterisation age strata
+# Vaccination, Healthcare Utilisation
+
+# Drug Utilisation
+
+# Treatment Patterns
+
+# -------------------------------------------------------------------
+# CHARACTERISATION AGE STRATA
+
+# Large scale characterisation
 do_age_strata <- function(cohort_id,new_id) {
   age_strata <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id == cohort_id)
   age1 <- age_strata %>% CohortProfiles::addAge(cdm) %>% dplyr::filter(age %in% c(0:2)) %>% mutate(cohort_definition_id = new_id)
@@ -67,10 +127,12 @@ do_age_strata <- function(cohort_id,new_id) {
   appendPermanent(age7, name = "studyathon_final_cohorts",  schema = results_database_schema)
   appendPermanent(age8, name = "studyathon_final_cohorts",  schema = results_database_schema)
 }
-id_new_age <- c(seq(157,277,8))
+# This will have to change once I know the actual age strata + no cohort_definition_id in the 200 range makes it strange
+
+id_new_age <- c(seq(157,197,8),seq(260,332,8))
 lapply(cohort_ids_interest,id_new_age,do_age_strata)
 
-charac_age <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(157:284))
+charac_age <- CohortProfiles::largeScaleCharacterization(cdm,"studyathon_final_cohorts", targetCohortId = c(157:204,260:339))
 write.csv(
   charac_age,
   file = here::here(output_lsc, "Characterisation_age"),
@@ -78,8 +140,31 @@ write.csv(
 )
 
 
-# Characterisation calendar period strata
+# Vaccination, Healthcare Utilisation
 
+# Drug Utilisation
 
+# Treatment Patterns
 
-# Characterisation vaccination strata
+# -------------------------------------------------------------------
+# CHARACTERISATION CALENDAR PERIOD STRATA
+
+# Large scale characterisation
+
+# Vaccination, Healthcare Utilisation
+
+# Drug Utilisation
+
+# Treatment Patterns
+
+# -------------------------------------------------------------------
+# CHARACTERISATION VACCINATION STRATA
+
+# Large scale characterisation
+
+# Vaccination, Healthcare Utilisation
+
+# Drug Utilisation
+
+# Treatment Patterns
+

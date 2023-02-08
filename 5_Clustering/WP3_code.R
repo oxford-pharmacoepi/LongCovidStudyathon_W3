@@ -6,13 +6,15 @@
 # LCA clustering
 
 # Convert the table to a "binary" format required by polCA
-# First get all people with LC symptoms
-symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id %in% c(5:29))
-symptoms_LC <- symptoms_LC %>% addAge(.,cdm) %>% addSex(.,cdm)
+# First get all people with LC symptoms (overlap with infection cohort at base)
+symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id %in% c(205:229))
+symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(.,cdm) %>% CohortProfiles::addSex(.,cdm) %>% collect()
 # FC_cohorts <- CDMConnector::readCohortSet(here("JSONS","FC_time_cohorts"))
 # symptoms_LC <- symptoms_LC %>% mutate(cohort_definition_id = as.integer(cohort_definition_id))
 # symptoms_LC <- as_tibble(symptoms_LC)
-symptoms_LC <- symptoms_LC %>% right_join(FC_cohorts, by = c("cohort_definition_id"="cohortId")) %>% dplyr::select(cohortName,subject_id,age,sex)
+symptoms_LC <- symptoms_LC %>% mutate(cohort_definition_id = cohort_definition_id - 200) %>% 
+  left_join(Initial_cohorts %>% dplyr::select(cohortId,cohortName) %>% mutate(cohort_definition_id = as.numeric(cohortId)), by = c("cohort_definition_id")) %>% 
+  dplyr::select(cohortName,subject_id,age,sex)
 
 # Get the names of the symptoms
 names_symptoms <- symptoms_LC %>% dplyr::select(cohortName) %>% distinct() %>% pull()
@@ -45,7 +47,8 @@ for(i in 1:length(names_symptoms)) {
 n_s <- append(n_s,"age")
 n_s <- append(n_s,"sex")
 colnames(mydata) <- n_s
-f <- with(mydata, cbind(LC_1, LC_2, LC_3, LC_4, LC_5, LC_6,  LC_7,  LC_8,  LC_9,  LC_10, LC_11, LC_12, LC_13, LC_14, LC_15, LC_16, LC_17, LC_18, LC_19, LC_20, LC_21, LC_22, LC_23, LC_24, LC_25)~ 1 + age + sex)
+# Only 23 as two symptoms don't appear, should do recursively depending on data partners
+f <- with(mydata, cbind(LC_1, LC_2, LC_3, LC_4, LC_5, LC_6,  LC_7,  LC_8,  LC_9,  LC_10, LC_11, LC_12, LC_13, LC_14, LC_15, LC_16, LC_17, LC_18, LC_19, LC_20, LC_21, LC_22, LC_23)~ 1 + age + sex)
 #------ run a sequence of models with 1-10 classes and print out the model with the lowest BIC
 # Tune these I guess???
 max_II <- -100000

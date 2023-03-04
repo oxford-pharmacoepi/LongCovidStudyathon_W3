@@ -389,8 +389,9 @@ E(ig)$width <- 10*E(ig)$weight
 plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
 # layout_in_circle(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
 
-ggsave(here::here(output_clustering, paste0("Modularity_CM_",tol,".png")), 
-       plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8))
+png(here::here(output_clustering, paste0("Modularity_CM_",tol,".png")), res = 150, height = 800, width = 1100)
+plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
+dev.off()
 
 # Community detection
 phi_CM <- abs(phi_matrix)
@@ -448,4 +449,6 @@ communities(c7)
 #K
 # Save these two? Lists, csvs?
 
-ggsave(here::here(output_clustering, "Modularity_CM.png"), plot(c7))
+png(here::here(output_clustering, "Modularity_CM.png"), res = 150, height = 800, width = 1100)
+plot(c7)
+dev.off()

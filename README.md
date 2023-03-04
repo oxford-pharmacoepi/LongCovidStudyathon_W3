@@ -20,7 +20,7 @@ to suit your particular needs.
 When you run that script, the whole code will start running. It will first
 instantiate the cohorts and then calculate everything for objectives 1, 2 and 3.
 If you re-run the code and the cohorts are already instantiated, you can set
-´instantiateCohorts = FALSE´ so as to not repeat long calculations. 
+`instantiateCohorts = FALSE` so as to not repeat long calculations. 
 
 ## Clustering
 For LCA and network clustering, you might have to tune some parameters 
@@ -28,7 +28,7 @@ yourself. (Explain)
 
 ## Trajectories
 For the trajectories part, note that it might not work if your database
-engine is not postgresql or (?), If so, please set it as ´FALSE´.
+engine is not postgresql or (?), If so, please set it as `FALSE`.
 
 ## Plots
 The package does offer some visualisations, which you can check in your final

@@ -17,8 +17,10 @@ if(doCharacterisation) {
   cdm <- CDMConnector::generateCohortSet(cdm, HU_cohorts,
                                          cohortTableName = "lc_pasc_hucohorts",
                                          overwrite = TRUE)
-  cdm$lc_pasc_hucohorts <- cdm$lc_pasc_hucohorts %>% left_join(observation_death, by = c("subject_id")) %>%
-    mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>% compute()
+  cdm$lc_pasc_hucohorts <- cdm$lc_pasc_hucohorts %>% left_join(observation_death, 
+                                                               by = c("subject_id")) %>%
+    mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>% 
+    compute()
 }
 
 if(doTreatmentPatterns) {
@@ -37,8 +39,10 @@ if(doTreatmentPatterns) {
                                          overwrite = TRUE)
   # Not to lose the instantiated cohorts from json from tampering with them
   cdm$lc_pasc_tpevents <- cdm$lc_pasc_tpcohorts
-  cdm$lc_pasc_tpevents <- cdm$lc_pasc_tpevents %>% left_join(observation_death, by = c("subject_id")) %>%
-    mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>% compute()
+  cdm$lc_pasc_tpevents <- cdm$lc_pasc_tpevents %>% left_join(observation_death, 
+                                                             by = c("subject_id")) %>%
+    mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>% 
+    compute()
 }
 
 #K
@@ -230,7 +234,8 @@ if(doTreatmentPatterns) {
 if(vaccine_data) {
   if(doCharacterisation) {
     info(logger, '-- Calculating Large-scale characterisation for vaccination strata')
-    cohort_ids_interest <-  c(117:124,900:923) # 117:124 base cohorts strata vacc, 900:923 any/code cohorts strata vacc
+    cohort_ids_interest <-  c(117:124,900:923) 
+    # 117:124 base cohorts strata vacc, 900:923 any/code cohorts strata vacc
     
     info(logger, '--- Looking at baseline characterisation and drug utilisation')
     # Large scale characterisation, also includes DrugUtilisation

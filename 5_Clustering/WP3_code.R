@@ -1,6 +1,8 @@
 # Clustering 
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts","lc_pasc_hucohorts"))
+cdm <- cdmFromCon(
+  db, cdm_database_schema, writeSchema = results_database_schema, 
+  cohortTables = c(cohort_table_name,"studyathon_final_cohorts","lc_pasc_hucohorts"))
 
 # Output folders for WP3
 output_clustering <- file.path(tempDir,"Clustering")
@@ -15,31 +17,45 @@ if (!file.exists(output_clustering)){
 info(logger, '-- Calculating LCA clustering')
 
 # First get all people with LC symptoms (overlap with infection cohort at base)
-symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% dplyr::filter(cohort_definition_id %in% c(205:229))
+symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% 
+  dplyr::filter(cohort_definition_id %in% c(205:229))
 # Need to add 109 too when ready (LC code + infection)
-symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(,cdm) %>% CohortProfiles::addSex(,cdm) %>% collect()
-symptoms_LC <- symptoms_LC %>% mutate(cohort_definition_id = cohort_definition_id - 200) %>% 
-  left_join(Initial_cohorts %>% dplyr::select(cohortId,cohortName) %>% mutate(cohort_definition_id = as.numeric(cohortId)), by = c("cohort_definition_id")) %>% 
+symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(cdm) %>% 
+  CohortProfiles::addSex(cdm) %>% collect()
+symptoms_LC <- symptoms_LC %>% 
+  mutate(cohort_definition_id = cohort_definition_id - 200) %>% 
+  left_join(Initial_cohorts %>% dplyr::select(cohortId,cohortName) %>% 
+              mutate(cohort_definition_id = as.numeric(cohortId)), 
+            by = c("cohort_definition_id")) %>% 
   dplyr::select(cohortName,subject_id,age,sex)
 
 # Get the names of the symptoms
-names_symptoms <- symptoms_LC %>% dplyr::select(cohortName) %>% distinct() %>% pull()
+names_symptoms <- symptoms_LC %>% dplyr::select(cohortName) %>% distinct() %>% 
+  pull()
 
 # Create table with columns of symptoms, 1 if individual has it, 0 otherwise
 i = 1
 working_name <- names_symptoms[i]
 working_name <- enquo(working_name)
-data_LCA <- symptoms_LC %>% filter(cohortName == !!working_name) %>% mutate(!!working_name := as.integer(1)) %>% dplyr::select(subject_id,!!working_name)
+data_LCA <- symptoms_LC %>% filter(cohortName == !!working_name) %>% 
+  mutate(!!working_name := as.integer(1)) %>% 
+  dplyr::select(subject_id,!!working_name)
 
 for(i in 2:length(names_symptoms)) {
   working_name <- names_symptoms[i]
   working_name <- enquo(working_name)
-  data_LCA <- data_LCA %>% full_join(symptoms_LC %>% filter(cohortName == !!working_name) %>% mutate(!!working_name := as.integer(1)) %>% dplyr::select(subject_id,!!working_name), by = c("subject_id"))
+  data_LCA <- data_LCA %>% full_join(symptoms_LC %>% 
+                                       filter(cohortName == !!working_name) %>% 
+                                       mutate(!!working_name := as.integer(1)) %>% 
+                                       dplyr::select(subject_id,!!working_name), 
+                                     by = c("subject_id"))
   
 }
 data_LCA[is.na(data_LCA)] <- 0
 data_LCA <- data_LCA %>% distinct()
-data_LCA <- data_LCA %>% left_join(symptoms_LC %>% dplyr::select(subject_id,age,sex), by = "subject_id")
+data_LCA <- data_LCA %>% left_join(symptoms_LC %>% 
+                                     dplyr::select(subject_id,age,sex), 
+                                   by = "subject_id")
 
 # Use package polCA
 # Fit latent class model
@@ -137,7 +153,7 @@ fit.plot<-ggplot(results2) +
 # Save plot and table with IC information
 write.csv(
   results,
-  file = here::here(output_clustering, paste0("Information_criteria.csv"),
+  file = here::here(output_clustering, paste0("Information_criteria.csv")),
   row.names = FALSE
 )
 ggsave(here::here(output_clustering, "LCA_IC.jpg"))
@@ -155,7 +171,7 @@ for(i in 1:6) {
 for(i in length(mean_posterior)) {
   write.csv(
     mean_posterior[[i]],
-    file = here::here(output_clustering, paste0("Mean_posterior",i,".csv"),
+    file = here::here(output_clustering, paste0("Mean_posterior",i,".csv")),
                       row.names = FALSE
     )
 }
@@ -173,7 +189,8 @@ for(k in 2:7) {
 }
 
 # Pick the best model
-number_best_model <- results %>% dplyr::filter(BIC == min(BIC)) %>% dplyr::select(Model) %>% pull()
+number_best_model <- results %>% dplyr::filter(BIC == min(BIC)) %>% 
+  dplyr::select(Model) %>% pull()
 lc <- LCA_models[[number_best_model -1]] 
 # selected according to previous plot, for now we get the one with the lowest bic. Should do it consciously in April
 
@@ -331,7 +348,8 @@ info(logger, '-- Visualising network and looking at community detection')
 # What to output here?
 
 # Number of people with each symptom
-number_people <- data_LCA %>% dplyr::select(-c(subject_id,age,sex)) %>% summarise(across(,sum)) %>%  unlist(., use.names=FALSE)
+number_people <- data_LCA %>% dplyr::select(-c(subject_id,age,sex)) %>% 
+  summarise(across(,sum)) %>%  unlist(., use.names=FALSE)
 
 # HERE I DO PHI COEFFICIENT (MAKES SENSE FOR BINATY VARIABLES), EVEN THOUGH WE CANNOT ACCOUNT FOR OTHER COVARIATES AT THE SAME TIME
 # Could also use other distance measures for dichotomous variables like https://docs.scipy.org/doc/scipy/reference/spatial.distance.html
@@ -343,7 +361,8 @@ for(i in 1:length(names_symptoms)) {
   for(j in 1:length(names_symptoms)) {
     if(i == j) phi_matrix[i,j] = 1
     else {
-      phi_matrix[i,j] = data_network[,c(i,j)] %>% table() %>% psych::phi(digits = 3)
+      phi_matrix[i,j] = data_network[,c(i,j)] %>% table() %>% 
+        psych::phi(digits = 3)
       phi_matrix[j,i] = phi_matrix[i,j]
       # mydata[,c(i,j)] %>% spicy::distance_measure_of_choice()
     }
@@ -370,7 +389,8 @@ E(ig)$width <- 10*E(ig)$weight
 plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
 # layout_in_circle(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
 
-ggsave(here::here(output_clustering, paste0("Modularity_CM_,"tol,".png")), plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8))
+ggsave(here::here(output_clustering, paste0("Modularity_CM_",tol,".png")), 
+       plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8))
 
 # Community detection
 phi_CM <- abs(phi_matrix)
@@ -429,6 +449,3 @@ communities(c7)
 # Save these two? Lists, csvs?
 
 ggsave(here::here(output_clustering, "Modularity_CM.png"), plot(c7))
-
-
-

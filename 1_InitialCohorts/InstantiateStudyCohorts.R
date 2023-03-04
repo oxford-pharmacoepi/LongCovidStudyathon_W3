@@ -2,7 +2,8 @@
 
 info(logger, "- getting initial cohort definitions")
 
-Initial_cohorts <- CDMConnector::readCohortSet(here::here("1_InitialCohorts","Jsons")) %>%
+Initial_cohorts <- CDMConnector::readCohortSet(
+  here::here("1_InitialCohorts","Jsons")) %>%
   dplyr::mutate(cohortName = substr(cohortName, 5, nchar(cohortName)))
 
 info(logger, "- getting initial cohorts")

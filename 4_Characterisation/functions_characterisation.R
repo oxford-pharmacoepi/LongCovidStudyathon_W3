@@ -2,32 +2,35 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name) {
   cohorts_interest <- cdm[["studyathon_final_cohorts"]] %>% 
     dplyr::filter(cohort_definition_id %in% cohort_ids_interest)
   cohorts_interest <- cohorts_interest %>% 
-    CohortProfiles::addEvent(cdm, "studyathon_final_cohorts", 
-                             filter = list(cohort_definition_id = 350),
+    CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
+                             cohortId = 350,
                              window = c(NA,0),
-                             name = "first_dose", order = "last") %>%
-    mutate(first_dose = ifelse(is.na(first_dose),0,1)) %>% compute()
+                             value = "binary",
+                             name = "first_dose") %>% compute()
   cohorts_interest <- cohorts_interest %>% 
-    CohortProfiles::addEvent(cdm, "studyathon_final_cohorts", 
-                             filter = list(cohort_definition_id = 351),
+    CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
+                             cohortId = 351,
                              name = "second_dose",
-                             window = c(NA,0), order = "last") %>%
-    mutate(second_dose = ifelse(is.na(second_dose),0,1)) %>% compute()
+                             window = c(NA,0),
+                             value = "binary") %>% compute()
   cohorts_interest <- cohorts_interest %>% 
-    CohortProfiles::addEvent(cdm, "studyathon_final_cohorts", 
-                             filter = list(cohort_definition_id = 352),
+    CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
+                             cohortId = 352,
                              name = "third_dose",
-                             window = c(NA,0), order = "last") %>%
-    mutate(third_dose = ifelse(is.na(third_dose),0,1)) %>% compute()
+                             window = c(NA,0),
+                             value = "binary") %>% compute()
   cohorts_interest <- cohorts_interest %>% 
-    CohortProfiles::addEvent(cdm, "studyathon_final_cohorts", 
-                             filter = list(cohort_definition_id = 103),
+    CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
+                             cohortId = 103,
                              name = "last_dose",
+                             value = "date",
                              window = c(NA,0), order = "last") %>% compute()
   
-  cohorts_interest <- cohorts_interest %>% mutate(dose = first_dose + second_dose + third_dose) %>%
+  cohorts_interest <- cohorts_interest %>% 
+    mutate(dose = first_dose + second_dose + third_dose) %>%
     mutate(last_dose_days = CDMConnector::datediff("last_dose","cohort_start_date")) %>%
-    dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date,dose,last_dose_days) %>% compute()
+    dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date,dose,last_dose_days) %>% 
+    compute()
   
   # More output than this??
   vacc_counts <- cohorts_interest %>% 
@@ -51,7 +54,9 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name) {
 }
 
 do_lsc <- function(cohort_ids_interest, stem_name) {
-  charac <- LargeScaleCharacteristics::getLargeScaleCharacteristics(cdm,"studyathon_final_cohorts", targetCohortId = cohort_ids_interest)
+  charac <- LargeScaleCharacteristics::getLargeScaleCharacteristics(
+    cdm, targetCohortName = "studyathon_final_cohorts", 
+    targetCohortId = cohort_ids_interest)
   for(i in 1:length(charac)) {
     write.csv(
       charac[[i]],
@@ -131,22 +136,26 @@ do_hu <- function(cohort_ids_interest, stem_name) {
 do_tp <- function(cohort_base_id, stem_name_strata) {
     dataSettings <- TreatmentPatterns::createDataSettings(
     OMOP_CDM = FALSE, 
-    cohortLocation = here("4_Characterisation","TreatmentPatterns_cohorts",paste0("input_cohorts_",stem_name_strata,".csv"))
+    cohortLocation = here("4_Characterisation","TreatmentPatterns_cohorts",
+                          paste0("input_cohorts_",stem_name_strata,".csv"))
   )
   
   cohortSettings <- TreatmentPatterns::createCohortSettings(
-    cohortsToCreate_location = here("4_Characterisation","TreatmentPatterns_cohorts",paste0("cohorts_to_create",cohort_base_id,".csv")),
+    cohortsToCreate_location = here("4_Characterisation","TreatmentPatterns_cohorts",
+                                    paste0("cohorts_to_create",cohort_base_id,".csv")),
     cohortsFolder = here("4_Characterisation","TreatmentPatterns_cohorts")
   )
   pathwaySettings <- TreatmentPatterns::createPathwaySettings(
-    pathwaySettings_location = here("4_Characterisation","TreatmentPatterns_cohorts",paste0("pathway_settings",cohort_base_id,".csv"))
+    pathwaySettings_location = here("4_Characterisation","TreatmentPatterns_cohorts",
+                                    paste0("pathway_settings",cohort_base_id,".csv"))
   )
   saveSettings <- TreatmentPatterns::createSaveSettings(databaseName = db.name,
                                                         rootFolder = here(),
                                                         outputFolder = here(output_tp))
   
-  TreatmentPatterns::executeTreatmentPatterns(dataSettings = dataSettings, cohortSettings = cohortSettings,
-                                              pathwaySettings = pathwaySettings, saveSettings = saveSettings)
+  TreatmentPatterns::executeTreatmentPatterns(
+    dataSettings = dataSettings, cohortSettings = cohortSettings,
+    pathwaySettings = pathwaySettings, saveSettings = saveSettings)
   
   #dTreatmentPatterns::launchResultsExplorer()
   

@@ -19,14 +19,18 @@ level(logger) <- "INFO"
 # Read initial cohorts
 if (readInitialCohorts){
   info(logger, 'INSTANTIATING INITIAL COHORTS')
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema)
+  cdm <- cdmFromCon(db, cdm_database_schema, 
+                    writeSchema = results_database_schema)
   source(here("1_InitialCohorts", "InstantiateStudyCohorts.R"), local=TRUE)
   info(logger, 'GOT STUDY COHORTS')
 } else {
   info(logger, 'INITIAL COHORTS ALREADY INSTANTIATED')
-  initialCohortSet <- CDMConnector::readCohortSet(here::here("1_InitialCohorts", "Jsons")) %>%
+  initialCohortSet <- CDMConnector::readCohortSet(
+    here::here("1_InitialCohorts", "Jsons")) %>%
     dplyr::mutate(cohortName = substr(cohortName, 5, nchar(cohortName)))
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = cohort_table_name)
+  cdm <- cdmFromCon(
+    db, cdm_database_schema, writeSchema = results_database_schema,
+    cohortTables = cohort_table_name)
   info(logger, 'INITIAL COHORTS READ')
 }
 
@@ -73,7 +77,8 @@ if (tempDirCreated) {
 info(logger, 'SAVED RESULTS IN THE OUTPUT FOLDER')
 
 print("Done!")
-print("If all has worked, there should now be a zip file with your results in the output folder to share")
+print("If all has worked, there should now be a zip file with your results
+      in the output folder to share")
 print("Thank you for running the study!")
 Sys.time() - start
 readLines(log_file)

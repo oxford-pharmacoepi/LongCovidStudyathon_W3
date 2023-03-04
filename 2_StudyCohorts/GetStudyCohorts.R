@@ -12,7 +12,8 @@ source(here("2_StudyCohorts","functions_getCohorts.R"))
 # observation period + death table
 observation_death <- cdm$observation_period %>%
   dplyr::select("subject_id" = "person_id", "observation_period_end_date") %>%
-  left_join(cdm$death %>% dplyr::select("subject_id" = "person_id", "death_date"), by = "subject_id") %>%
+  left_join(cdm$death %>% dplyr::select("subject_id" = "person_id", "death_date"),
+            by = "subject_id") %>%
   mutate(death = ifelse(!(is.na(death_date)), 1,0)) %>%
   compute()
 
@@ -48,25 +49,32 @@ influenza_init <- cdm[[cohort_table_name]] %>%
     "cohort_start_date"
   ) %>% compute() 
 
-covid <- do_exclusion(cdm, newinf_init, id = 1, "cohort_start_date", S_start_date = study_start_date, covidcensor = FALSE)
-nocovid <- do_exclusion(cdm, negative_init, id = 3, "cohort_start_date", S_start_date = study_start_date)
-influenza <- do_exclusion(cdm, influenza_init, id = 4, "cohort_start_date", S_start_date = as.Date("2017-09-01"))
+covid <- do_exclusion(cdm, newinf_init, id = 1, 
+                      S_start_date = study_start_date, covidcensor = FALSE)
+nocovid <- do_exclusion(cdm, negative_init, id = 3, 
+                        S_start_date = study_start_date)
+influenza <- do_exclusion(cdm, influenza_init, id = 4, 
+                          S_start_date = as.Date("2017-09-01"))
   
 # New infection "final": inclusion/exclusion
 new_infection <- covid[[1]]
-new_infection <- new_infection %>% mutate(cohort_definition_id = 1) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+new_infection <- new_infection %>% mutate(cohort_definition_id = 1) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Reinfection
 reinfection <- covid[[2]]
-reinfection <- reinfection %>% mutate(cohort_definition_id = 2) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+reinfection <- reinfection %>% mutate(cohort_definition_id = 2) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Tested negative "final"
 negativetest <- nocovid[[1]]
-negativetest <- negativetest %>% mutate(cohort_definition_id = 3) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+negativetest <- negativetest %>% mutate(cohort_definition_id = 3) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Influenza
 flu <- influenza[[1]]
-flu <- flu %>% mutate(cohort_definition_id = 4) %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
+flu <- flu %>% mutate(cohort_definition_id = 4) %>%
+  dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
 
 # Attritions
 attrition_positive <- covid[[3]]
@@ -86,10 +94,14 @@ attrition_censor_flu <- influenza[[4]]
 attrition_censor_flu <- attrition_censor_flu %>% mutate(cohort_definition_id = 4)
 attrition_censor <- rbind(attrition_censor_positive,attrition_censor_negative,attrition_censor_flu)
 
-computePermanent(new_infection, name = "studyathon_final_cohorts",  schema = results_database_schema, overwrite = TRUE)
-appendPermanent(reinfection, name = "studyathon_final_cohorts",  schema = results_database_schema)
-appendPermanent(negativetest, name = "studyathon_final_cohorts",  schema = results_database_schema)
-appendPermanent(flu, name = "studyathon_final_cohorts",  schema = results_database_schema)
+computePermanent(new_infection, name = "studyathon_final_cohorts",
+                 schema = results_database_schema, overwrite = TRUE)
+appendPermanent(reinfection, name = "studyathon_final_cohorts",
+                schema = results_database_schema)
+appendPermanent(negativetest, name = "studyathon_final_cohorts",
+                schema = results_database_schema)
+appendPermanent(flu, name = "studyathon_final_cohorts",
+                schema = results_database_schema)
 
 write.csv(
   attrition,
@@ -102,7 +114,8 @@ write.csv(
   row.names = FALSE
 )
 
-names_final_cohorts <- dplyr::tibble(cohortId = c(1:4), cohortName = c("Infection","Reinfection","Test negative","Influenza"))
+names_final_cohorts <- dplyr::tibble(cohortId = c(1:4),
+                                     cohortName = c("Infection","Reinfection","Test negative","Influenza"))
 
 # ---------------------------------------------------------------------
 # OUTCOME COHORTS
@@ -113,10 +126,12 @@ info(logger, '-- Getting outcome cohorts')
 # Long covid symptoms
 create_outcome(cdm, window = c(5:29), filter_start = FALSE, first_event = FALSE)
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = c(5:59), cohortName = initialCohortSet$cohortName[5:59]))
+                             dplyr::tibble(cohortId = c(5:59),
+                                           cohortName = initialCohortSet$cohortName[5:59]))
 
 # Any LC symptom
 create_any_cohort(cdm, c(5:29), 100, LC = TRUE)
@@ -189,7 +204,8 @@ if(vaccine_data) {
                 by = "subject_id") %>% mutate(cohort_definition_id = 104) %>%
       left_join(observation_death, by = c("subject_id")) %>%
       mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date, vacc_date))) %>%
-      left_join(cdm$observation_period %>% dplyr::select("cohort_start_date" = "observation_period_start_date","person_id"),
+      left_join(cdm$observation_period %>% 
+                  dplyr::select("cohort_start_date" = "observation_period_start_date","person_id"),
                 by = c("subject_id" = "person_id")) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       compute()
@@ -372,7 +388,8 @@ finalCounts <- cdm[["studyathon_final_cohorts"]] %>%
   tally() %>% 
   collect() %>% 
   right_join(names_final_cohorts, by = c("cohort_definition_id"="cohortId")) %>% 
-  mutate(n = as.numeric(n)) %>% mutate(n = if_else(is.na(n), 0, n)) %>% mutate(n = ifelse(n <= 5, NA, n)) %>% dplyr::select(cohortName,n)
+  mutate(n = as.numeric(n)) %>% mutate(n = if_else(is.na(n), 0, n)) %>%
+  mutate(n = ifelse(n <= 5, NA, n)) %>% dplyr::select(cohortName,n)
 
 # Export csv
 write.csv(finalCounts,

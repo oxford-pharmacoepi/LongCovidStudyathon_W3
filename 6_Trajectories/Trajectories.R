@@ -9,12 +9,15 @@ if (!file.exists(output_traj)){
 traj_table <- cdm$studyathon_final_cohorts %>%
   dplyr::filter(cohort_definition_id == 105) %>%
   mutate(cohort_definition_id = 1)
-computePermanent(traj_table, name = "studyathon_trajcohort",  schema = results_database_schema, overwrite = TRUE)
+computePermanent(traj_table, name = "studyathon_trajcohort",  
+                 schema = results_database_schema, overwrite = TRUE)
 
 # ASK ANNIKA ABOUT PREFERRED TRAJECTORIES PARAMETERS!!
 #K
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c(cohort_table_name,"studyathon_final_cohorts","studyathon_trajcohort"))
+cdm <- cdmFromCon(
+  db, cdm_database_schema, writeSchema = results_database_schema, 
+  cohortTables = c(cohort_table_name,"studyathon_final_cohorts","studyathon_trajcohort"))
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema="",

@@ -7,11 +7,25 @@ library("dplyr")
 library("dbplyr")
 library("CirceR")
 library("CDMConnector")
+library("DatabaseConnector")
 library("here")
 library("log4r")
 library("zip")
 library("poLCA")
 library("igraph")
+library("psych")
+library("Trajectories")
+library("MatchIt")
+library("purrr")
+library("MCL")
+library("ggplot2")
+library("colorBlindness")
+library("networkD3")
+
+# get with remotes
+library(IncidencePrevalence)
+library(CohortProfiles)
+library(LargeScaleCharacteristics)
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
@@ -48,20 +62,27 @@ results_database_schema <- "..."
 cohort_table_name <- "..."
 
 # Study start date, should not change this
-study_start_date <- as.Date("2020-09-01")
+study_start_date <- as.Date("...")
 
 # Covid end date, country specific, when testing ended
-covid_end_date <- as.Date("2022-09-01")
+covid_end_date <- as.Date("...")
+
+# Latest data availability, to know until when to calculate incidences
+latest_data_availability <- as.Date("...") 
 
 # Decide which parts of the study you want to run 
 readInitialCohorts <- TRUE
 getStudyCohorts <- TRUE
 doIncidencePrevalence <- TRUE
 doCharacterisation <- TRUE
-doDrugUtilisation <- TRUE
 doTreatmentPatterns <- TRUE
 doClustering <- TRUE
 doTrajectories <- TRUE
+
+# Set to true or false for the following information for your database
+vaccine_data <- TRUE # Set to FALSE if you have no information on vaccination whatsoever - and thus cannot stratify by it
+vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination, but not on vaccine brand
+
 # Run the study
 source(here("RunStudy.R"))
 

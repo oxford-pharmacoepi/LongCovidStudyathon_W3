@@ -1,0 +1,17 @@
+{
+  "mode": ["DISCOVERY"],
+  "minimumDaysBetweenEvents": [1],
+  "maximumDaysBetweenEvents": [365],
+  "minPatientsPerEventPair": [100],
+  "addConditions": [true],
+  "addObservations": [false],
+  "addProcedures": [false],
+  "addDrugExposures": [true],
+  "addDrugEras": [false],
+  "addBirths": [false],
+  "addDeaths": [true],
+  "daysBeforeIndexDate": [0],
+  "cohortName": ["Long Covid"],
+  "description": ["Long COVID study"],
+  "RRrangeToSkip": [0.7, 1.3]
+}

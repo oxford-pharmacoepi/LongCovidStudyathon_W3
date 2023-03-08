@@ -153,7 +153,7 @@ names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(cohortId = 100, cohortName = "Any LC symptom"))
 
 # LC code
-create_outcome(cdm, window = 65, 101)
+create_outcome(cdm, window = 64, 101)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(cohortId = 101, cohortName = "LC code"))
@@ -496,9 +496,9 @@ finalCounts <- cdm[["studyathon_final_cohorts"]] %>%
   group_by(cohort_definition_id) %>% 
   tally() %>% 
   collect() %>% 
-  right_join(names_final_cohorts, by = c("cohort_definition_id"="cohortId")) %>% 
+  right_join(names_final_cohorts, by = c("cohort_definition_id"="cohort_definition_id")) %>% 
   mutate(n = as.numeric(n)) %>% mutate(n = if_else(is.na(n), 0, n)) %>%
-  mutate(n = ifelse(n <= 5, NA, n)) %>% dplyr::select(cohortName,n)
+  mutate(n = ifelse(n <= 5, NA, n)) %>% dplyr::select(cohort_name,n)
 
 # Export csv
 write.csv(finalCounts,

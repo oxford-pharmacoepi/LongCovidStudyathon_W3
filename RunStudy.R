@@ -22,15 +22,15 @@ if (readInitialCohorts){
   cdm <- cdmFromCon(db, cdm_database_schema, 
                     writeSchema = results_database_schema)
   source(here("1_InitialCohorts", "InstantiateStudyCohorts.R"), local=TRUE)
-  info(logger, 'GOT STUDY COHORTS')
+  info(logger, 'GOT INITIAL COHORTS')
 } else {
   info(logger, 'INITIAL COHORTS ALREADY INSTANTIATED')
   initialCohortSet <- CDMConnector::readCohortSet(
     here::here("1_InitialCohorts", "Jsons")) %>%
-    dplyr::mutate(cohortName = substr(cohortName, 5, nchar(cohortName)))
+    dplyr::mutate(cohort_name = substr(cohort_name, 5, nchar(cohort_name)))
   cdm <- cdmFromCon(
     db, cdm_database_schema, writeSchema = results_database_schema,
-    cohortTables = cohort_table_name)
+    cohortTables = "studyathon_lcpasc")
   info(logger, 'INITIAL COHORTS READ')
 }
 
@@ -49,17 +49,17 @@ if(doIncidencePrevalence) {
 }
 
 # Objective 2a: Characterisation
-if(doCharacterisation | doDrugUtilisation | doTreatmentPatterns) {
-  info(logger, 'DOING LARGE-SCALE CHARACTERISATION')
+if(doCharacterisation || doDrugUtilisation || doTreatmentPatterns) {
+  info(logger, 'DOING LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
   source(here("4_Characterisation","WP2_code.R"), local = TRUE)
-  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION')
+  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
 }
 
 # Objective 3a: Clustering
 if(doClustering) {
-  info(logger, 'PERFORMING LCA CLUSTERING')
+  info(logger, 'PERFORMING LCA CLUSTERING AND NETWORK ANALYSIS')
   source(here("5_Clustering","WP3_code.R"), local = TRUE)
-  info(logger, 'FINISHED LCA CLUSTERING')
+  info(logger, 'FINISHED LCA CLUSTERING AND NETWORK ANALYSIS')
 }
 
 # Objective 3c: Trajectories
@@ -68,6 +68,13 @@ if(doTrajectories) {
   source(here("6_Trajectories","Trajectories.R"), local = TRUE)
   info(logger, 'FINISHED TRAJECTORIES')
 }
+
+# Preliminary plots
+#if(createPlots) {
+#  info(logger, 'PLOTTING RESULTS')
+#  source(here("7_Plots","Plots.R"), local = TRUE)
+#  info(logger, 'RESULTS PLOTTED')
+#}
 
 zip::zip(zipfile = file.path(output.folder, paste0(zipName, ".zip")),
          files = list.files(tempDir, full.names = TRUE))

@@ -6,7 +6,7 @@
 # look back 0
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(cohort_table_name,"studyathon_final_cohorts"))
+                  cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts"))
 
 # Output folder for WP1
 output_ip <- file.path(tempDir,"IP")

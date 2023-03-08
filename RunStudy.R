@@ -10,7 +10,7 @@ if (!dir.exists(tempDir)) {
 start <- Sys.time()
 
 # Start log
-log_file <- paste0(output.folder, "/log.txt")
+log_file <- paste0(tempDir, "/log.txt")
 # Think what to do if already there. Overwrite, append?
 logger <- create.logger()
 logfile(logger) <- log_file

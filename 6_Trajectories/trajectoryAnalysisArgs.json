@@ -4,7 +4,7 @@
   "maximumDaysBetweenEvents": [365],
   "minPatientsPerEventPair": [100],
   "addConditions": [true],
-  "addObservations": [false],
+  "addObservations": [true],
   "addProcedures": [false],
   "addDrugExposures": [true],
   "addDrugEras": [false],

@@ -2,7 +2,7 @@
 
 cdm <- cdmFromCon(
   db, cdm_database_schema, writeSchema = results_database_schema, 
-  cohortTables = c(cohort_table_name,"studyathon_final_cohorts","lc_pasc_hucohorts"))
+  cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts","lc_pasc_hucohorts"))
 
 # Output folders for WP3
 output_clustering <- file.path(tempDir,"Clustering")
@@ -19,7 +19,13 @@ info(logger, '-- Calculating LCA clustering')
 # First get all people with LC symptoms (overlap with infection cohort at base)
 symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% 
   dplyr::filter(cohort_definition_id %in% c(205:229))
-# Need to add 109 too when ready (LC code + infection)
+# Mutate LC code cohort id from 109 to 264 to make the code easier
+symptoms_LC <- symptoms_LC %>%
+  dplyr::full_join(
+    cdm[["studyathon_final_cohorts"]] %>% 
+      dplyr::filter(cohort_definition_id == 109) %>%
+      dplyr::mutate(cohort_definition_id = 264)
+  )
 symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(cdm) %>% 
   CohortProfiles::addSex(cdm) %>% collect()
 symptoms_LC <- symptoms_LC %>% 
@@ -29,7 +35,7 @@ symptoms_LC <- symptoms_LC %>%
             by = c("cohort_definition_id")) %>% 
   dplyr::select(cohortName,subject_id,age,sex)
 
-# Get the names of the symptoms
+# Get the names of the symptoms or LC code
 names_symptoms <- symptoms_LC %>% dplyr::select(cohortName) %>% distinct() %>% 
   pull()
 
@@ -222,7 +228,7 @@ factors <- as.matrix(factors)
 rownames(factors) <- names_symptoms
 factors <- factors[order(rownames(factors)),]
 
-#' Include prevalence average lines
+# Include prevalence average lines
 for (i in 1:length(factors)) {
   zp1 <- zp1 + geom_segment(x = (i - 0.5), y = factors[[i]], xend = (i + 0.5), yend = factors[[i]])
 }
@@ -258,78 +264,48 @@ write.csv(
 
 # Look at healthcare utilisation outcomes
 cohort_LC <- cdm[["studyathon_final_cohorts"]] %>% 
-  dplyr::filter(cohort_definition_id %in% c(205:229)) #109 too when available
+  dplyr::filter(cohort_definition_id %in% c(109,205:229))
 cohort_LC <- cohort_LC %>% 
   CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
                                      value = c("number", "time"), order = "last", 
-                                     window = c(NA,-366)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(-365,-91)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(-90,-1)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(-365,-31)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(-30,-1)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(0,0)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(1,30)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(1,90)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(31,365)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(91,365)) %>%
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(366,NA)) %>% compute()
+                                     window = c(-365,-1)) %>%
+  CohortProfiles::addTableIntersect(cdm, tableName = "visit_occurrence", 
+                                    value = c("number", "time"), order = "last",
+                                    window = c(-365, -1))
 
-cohort_LC_computed <- cohort_LC %>% compute()  %>% as_tibble() %>% left_join(mydata %>% dplyr::select(subject_id, cluster_assignment), by = "subject_id")
-
-# Something else apart from number and time?
-#K
-# Change these means and vars to ALL windows!!
 HU_summary <- cohort_LC %>% 
   dplyr::group_by(cluster_assignment) %>%
-  dplyr::summarise("mean_number_ICU_(NA,-366)" = mean("number_lc_pasc_hucohorts_1_(NA,-366)"), 
-                   "mean_number_ICU_(-365,-91)" = mean("number_lc_pasc_hucohorts_1_(-365,-91)"),
-                   "mean_number_ICU_(-90,-1)" = mean("number_lc_pasc_hucohorts_1_(-90,-1)"),
-                   "mean_number_ICU_(-365,-31)" = mean("number_lc_pasc_hucohorts_1_(-365,-31)"),
-                   "mean_number_ICU_(-30,-1)" = mean("number_lc_pasc_hucohorts_1_(-30,-1)"),
-                   "mean_number_ICU_(0,0)" = mean("number_lc_pasc_hucohorts_1_(0,0)"),
-                   "mean_number_ICU_(1,30)" = mean("number_lc_pasc_hucohorts_1_(1,30)"),
-                   "mean_number_ICU_(1,90)" = mean("number_lc_pasc_hucohorts_1_(1,90)"),
-                   "mean_number_ICU_(31,365)" = mean("number_lc_pasc_hucohorts_1_(31,365)"),
-                   "mean_number_ICU_(91,365)" = mean("number_lc_pasc_hucohorts_1_(91,365)"),
-                   "mean_number_ICU_(366,NA)" = mean("number_lc_pasc_hucohorts_1_(366,NA)"),
-                   "mean_number_ICU_all" = mean(dplyr::start_with("number_lc_pasc_hucohorts_1")),
-                   
+  dplyr::summarise(mean_number_ICU = mean(number_lc_pasc_hucohorts_1), 
                    mean_number_ventilation = mean(number_lc_pasc_hucohorts_2),
                    mean_number_tracheostomy = mean(number_lc_pasc_hucohorts_3), 
                    mean_number_ECMO = mean(number_lc_pasc_hucohorts_4),
+                   mean_number_GP = mean("number_visit_occurrence_(-365,-1)"),
+                   sum_ICU = sum(number_lc_pasc_hucohorts_1), 
+                   sum_ventilation = sum(number_lc_pasc_hucohorts_2),
+                   sum_tracheostomy = sum(number_lc_pasc_hucohorts_3), 
+                   sum_ECMO = sum(number_lc_pasc_hucohorts_4),
+                   sum_GP = sum("number_visit_occurrence_(-365,-1)"),
                    mean_time_ICU = mean(time_lc_pasc_hucohorts_1),
                    mean_time_ventilation = mean(time_lc_pasc_hucohorts_2),
                    mean_time_tracheostomy = mean(time_lc_pasc_hucohorts_3),
                    mean_time_ECMO = mean(time_lc_pasc_hucohorts_4),
+                   mean_time_GP = mean("time_visit_occurrence_(-365,-1)"),
                    var_number_ICU = var(number_lc_pasc_hucohorts_1), 
                    var_number_ventilation = var(number_lc_pasc_hucohorts_2),
                    var_number_tracheostomy = var(number_lc_pasc_hucohorts_3), 
                    var_number_ECMO = var(number_lc_pasc_hucohorts_4),
+                   var_number_GP = var("number_visit_occurrence_(-365,-1)"),
                    var_time_ICU = var(time_lc_pasc_hucohorts_1),
                    var_time_ventilation = var(time_lc_pasc_hucohorts_2),
                    var_time_tracheostomy = var(time_lc_pasc_hucohorts_3),
                    var_time_ECMO = var(time_lc_pasc_hucohorts_4),
+                   var_time_GP = var("time_visit_occurrence_(-365,-1)"),
                    .groups = 'drop')
+
+
+# Add hospitalisation and sick leave when available too
+
+#cohort_LC_computed <- cohort_LC %>% compute()  %>% as_tibble() %>% left_join(mydata %>% dplyr::select(subject_id, cluster_assignment), by = "subject_id")
 
 write.csv(
   HU_summary,
@@ -337,15 +313,11 @@ write.csv(
   row.names = FALSE
 )
 
-#K
-# Do we want to look at other outcomes??
+
 
 # -------------------------------------------------------------------------------------------
 # NETWORK VISUALISATION AND COMMUNITY DETECTION
 info(logger, '-- Visualising network and looking at community detection')
-
-#K
-# What to output here?
 
 # Number of people with each symptom
 number_people <- data_LCA %>% dplyr::select(-c(subject_id,age,sex)) %>% 
@@ -371,29 +343,31 @@ for(i in 1:length(names_symptoms)) {
 
 # Define tolerance under which neglect correlation
 # It is quite common to look at (-0,2,0.2) for significant correlation, can be tuned for better visualisation
-tol <- 0.1
+tol <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3)
 
-phi_test <- phi_matrix
-phi_test <- abs(phi_test) 
-phi_test[phi_test < tol] <- 0 
-diag(phi_test) <- 0 # We don't care about obvious correlation of each variable with itself
+for(t in tol) {
+  phi_test <- phi_matrix
+  phi_test <- abs(phi_test) 
+  phi_test[phi_test < tol] <- 0 
+  diag(phi_test) <- 0 # We don't care about obvious correlation of each variable with itself
+  
+  # Build network with nodes symptoms, edges phi coefficient using igraph package
+  ig <- graph.adjacency(phi_test, mode="undirected", weighted=TRUE)
+  
+  # Tune this in a way that is visually beautiful and related to the value of people affected / strength of the association
+  V(ig)$size <- log(number_people)
+  E(ig)$width <- 10*E(ig)$weight
+  
+  # https://kateto.net/netscix2016.html # Visualisation ideas
+  plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
+  # layout_in_circle(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
+  
+  png(here::here(output_clustering, paste0("Network_",tol,".png")), res = 150, height = 800, width = 1100)
+  plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
+  dev.off()
+}
 
-# Build network with nodes symptoms, edges phi coefficient using igraph package
-ig <- graph.adjacency(phi_test, mode="undirected", weighted=TRUE)
-
-# Tune this in a way that is visually beautiful and related to the value of people affected / strength of the association
-V(ig)$size <- log(number_people)
-E(ig)$width <- 10*E(ig)$weight
-
-# https://kateto.net/netscix2016.html # Visualisation ideas
-plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
-# layout_in_circle(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
-
-png(here::here(output_clustering, paste0("Modularity_CM_",tol,".png")), res = 150, height = 800, width = 1100)
-plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
-dev.off()
-
-# Community detection
+# Community detection: can also tune the tolerance in the future
 phi_CM <- abs(phi_matrix)
 phi_CM[phi_CM < 0.05] <- 0
 diag(phi_CM) <- 0
@@ -415,6 +389,7 @@ c7 <- igraph::cluster_louvain(ig_full, weights = E(ig_full)$weight)
 c8 <- igraph::cluster_louvain(ig_full, weights = E(ig_full)$weight, resolution = 1.4)
 c9 <- igraph::cluster_louvain(ig_full, weights = E(ig_full)$weight, resolution = 0.6)
 
+# Choose which ones to look at together, or to output (after GOLD)
 plot(c1,ig_full)
 plot(c2,ig_full)
 plot(c3,ig_full)
@@ -446,9 +421,11 @@ for(i in 1:9) {
 membership(c7)
 communities(c7)
 
-#K
-# Save these two? Lists, csvs?
-
 png(here::here(output_clustering, "Modularity_CM.png"), res = 150, height = 800, width = 1100)
 plot(c7)
 dev.off()
+
+capture.output(communities(c7), file = here::here(output_clustering, "Communities_CM.txt"))
+
+
+

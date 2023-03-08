@@ -60,10 +60,6 @@ vocabulary_database_schema <- cdm_database_schema
 # Name of the schema where the result table will be created
 results_database_schema <- "..."
 
-# Name of the outcome table in the result table where the outcome cohorts will
-# be stored
-cohort_table_name <- "..."
-
 # Study start date, should not change this
 study_start_date <- as.Date("...")
 

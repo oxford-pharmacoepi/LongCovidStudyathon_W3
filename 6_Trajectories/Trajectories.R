@@ -5,19 +5,17 @@ output_traj <- file.path(tempDir,"Trajectories")
 if (!file.exists(output_traj)){
   dir.create(output_traj, recursive = TRUE)}
 
-# Save the "any LC symptom + infection (add code?)" cohort in a table which can be read by Trajectories package too
+# Save the "any LC symptom + infection" or "infection + LC code" cohort in a table which can be read by Trajectories package
 traj_table <- cdm$studyathon_final_cohorts %>%
-  dplyr::filter(cohort_definition_id == 105) %>%
+  dplyr::filter(cohort_definition_id %in% c(105,109)) %>%
   mutate(cohort_definition_id = 1)
 computePermanent(traj_table, name = "studyathon_trajcohort",  
                  schema = results_database_schema, overwrite = TRUE)
 
-# ASK ANNIKA ABOUT PREFERRED TRAJECTORIES PARAMETERS!!
-#K
 
 cdm <- cdmFromCon(
   db, cdm_database_schema, writeSchema = results_database_schema, 
-  cohortTables = c(cohort_table_name,"studyathon_final_cohorts","studyathon_trajcohort"))
+  cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts","studyathon_trajcohort"))
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema="",

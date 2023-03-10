@@ -1,8 +1,6 @@
 # Large-scale characterisation part
 # Only for base cohorts and for LC any / LC code / PASC any in overlap
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts","lc_pasc_hucohorts","lc_pasc_tpcohorts"))
-
 # get functions used throughout this script
 source(here("4_Characterisation","functions_characterisation.R"))
 
@@ -11,6 +9,7 @@ if(doCharacterisation) {
   output_lsc <- file.path(tempDir,"Large-scale Characterisation")
   if (!file.exists(output_lsc)){
     dir.create(output_lsc, recursive = TRUE)}
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts","lc_pasc_hucohorts"))
 }
 
 if(doTreatmentPatterns) {
@@ -21,6 +20,8 @@ if(doTreatmentPatterns) {
   output_tp_db <- file.path(tempDir, db.name)
   if (!file.exists(output_tp_db)){
     dir.create(output_tp_db, recursive = TRUE)}
+  
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema, cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts"))
 }
 
 names_final_cohorts <- read.csv(names_final_cohorts,
@@ -75,8 +76,8 @@ do_sex_strata <- function(cohort_id,new_id) {
   appendPermanent(females, name = "studyathon_final_cohorts",  schema = results_database_schema)
   appendPermanent(males, name = "studyathon_final_cohorts",  schema = results_database_schema)
   names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(cohortId = c(new_id,new_id+1), 
-                                             cohortName =c(paste0("Cohort ",i," females" ),paste0("Cohort ",i," males" ))))
+                               dplyr::tibble(cohort_definition_id = c(new_id,new_id+1), 
+                                             cohort_name =c(paste0("Cohort ",i," females" ),paste0("Cohort ",i," males" ))))
 }
 
 id_new_sex <- c(seq(125,155,2))
@@ -133,8 +134,8 @@ do_age_strata <- function(cohort_id,new_id) {
   appendPermanent(age8, name = "studyathon_final_cohorts",  schema = results_database_schema)
   
   names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(cohortId = c(new_id : new_id+7), 
-                                             cohortName =c(paste0("Cohort ",i," age (0,2)" ),
+                               dplyr::tibble(cohort_definition_id = c(new_id : new_id+7), 
+                                             cohort_name =c(paste0("Cohort ",i," age (0,2)" ),
                                                            paste0("Cohort ",i," age (3,5)" ),
                                                            paste0("Cohort ",i," age (6,9)" ),
                                                            paste0("Cohort ",i," age (10,13)" ),
@@ -242,7 +243,7 @@ if(vaccine_data) {
 }
 
 # -------------------------------------------------------------------------
-# Can save the file with cohortIds and cohortNames now, as no more will be created for the rest of the package
+# Can save the file with cohort_definition_ids and cohort_names now, as no more will be created for the rest of the package
 
 write.csv(
   names_final_cohorts,

@@ -9,8 +9,13 @@ if (!file.exists(output_traj)){
 traj_table <- cdm$studyathon_final_cohorts %>%
   dplyr::filter(cohort_definition_id %in% c(105,109)) %>%
   mutate(cohort_definition_id = 1)
-computePermanent(traj_table, name = "studyathon_trajcohort",  
-                 schema = results_database_schema, overwrite = TRUE)
+computeQuery(new_infection,
+             name = "studyathon_trajcohort",
+             temporary = FALSE,
+             schema = write_database_schema,
+             overwrite = TRUE)
+#computePermanent(traj_table, name = "studyathon_trajcohort",  
+#                 schema = results_database_schema, overwrite = TRUE)
 
 
 cdm <- cdmFromCon(

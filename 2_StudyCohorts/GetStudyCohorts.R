@@ -107,8 +107,13 @@ attrition_censor_flu <- attrition_censor_flu %>% mutate(cohort_definition_id = 4
   compute()
 attrition_censor <- rbind(attrition_censor_positive,attrition_censor_negative,attrition_censor_flu)
 
-computePermanent(new_infection, name = "studyathon_final_cohorts",
-                 schema = results_database_schema, overwrite = TRUE)
+computeQuery(new_infection,
+             name = "studyathon_final_cohorts",
+             temporary = FALSE,
+             schema = results_database_schema,
+             overwrite = TRUE)
+#computePermanent(new_infection, name = "studyathon_final_cohorts",
+#                 schema = results_database_schema, overwrite = TRUE)
 appendPermanent(reinfection, name = "studyathon_final_cohorts",
                 schema = results_database_schema)
 appendPermanent(negativetest, name = "studyathon_final_cohorts",
@@ -127,8 +132,8 @@ write.csv(
   row.names = FALSE
 )
 
-names_final_cohorts <- dplyr::tibble(cohortId = c(1:4),
-                                     cohortName = c("Infection","Reinfection","Test negative","Influenza"))
+names_final_cohorts <- dplyr::tibble(cohort_definition_id = c(1:4),
+                                     cohort_name = c("Infection","Reinfection","Test negative","Influenza"))
 
 # ---------------------------------------------------------------------
 # OUTCOME COHORTS
@@ -143,20 +148,20 @@ cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema
                   cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts"))
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = c(5:59),
-                                           cohortName = initialCohortSet$cohortName[5:59]))
+                             dplyr::tibble(cohort_definition_id = c(5:59),
+                                           cohort_name = initialCohortSet$cohort_name[5:59]))
 
 # Any LC symptom
 create_any_cohort(cdm, c(5:29), 100, LC = TRUE)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = 100, cohortName = "Any LC symptom"))
+                             dplyr::tibble(cohort_definition_id = 100, cohort_name = "Any LC symptom"))
 
 # LC code
 create_outcome(cdm, window = 64, 101)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = 101, cohortName = "LC code"))
+                             dplyr::tibble(cohort_definition_id = 101, cohort_name = "LC code"))
 
 # PASC events
 create_outcome(cdm, window = c(30:39))
@@ -165,7 +170,7 @@ create_outcome(cdm, window = c(30:39))
 create_any_cohort(cdm, c(30:39), 102)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = 102, cohortName = "Any PASC event"))
+                             dplyr::tibble(cohort_definition_id = 102, cohort_name = "Any PASC event"))
 
 # Medical conditions
 create_outcome(cdm, window = c(40:59), end_outcome = FALSE)
@@ -249,8 +254,8 @@ if(vaccine_data && db.name != "CPRDGold") {
     appendPermanent(vaccinated_third, name = "studyathon_final_cohorts",  schema = results_database_schema)
     
     names_final_cohorts <- rbind(names_final_cohorts,
-                                 dplyr::tibble(cohortId = c(103,104,350:352), 
-                                               cohortName = c("Vaccinated", "Not vaccinated", "First dose", "Second dose", "Third dose")))
+                                 dplyr::tibble(cohort_definition_id = c(103,104,350:352), 
+                                               cohort_name = c("Vaccinated", "Not vaccinated", "First dose", "Second dose", "Third dose")))
     
   } else {
     # What to do with people who have no brand data? We must build some different vaccination cohort!!
@@ -328,8 +333,8 @@ if(vaccine_data && db.name != "CPRDGold") {
   appendPermanent(vaccinated_third, name = "studyathon_final_cohorts",  schema = results_database_schema)
   
   names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(cohortId = c(103,104,350:352), 
-                                             cohortName = c("Vaccinated", "Not vaccinated", "First dose", "Second dose", "Third dose")))
+                               dplyr::tibble(cohort_definition_id = c(103,104,350:352), 
+                                             cohort_name = c("Vaccinated", "Not vaccinated", "First dose", "Second dose", "Third dose")))
 }
 
 # ---------------------------------------------------------------------
@@ -338,17 +343,8 @@ if(vaccine_data && db.name != "CPRDGold") {
 message("Getting overlapping cohorts")
 info(logger, '-- Getting overlapping cohorts')
 
-# LC any symptom + Infection
-do_overlap_LCany(cdm, 1, c(5:29), 105)
-
-# LC any symptom + Reinfection
-do_overlap_LCany(cdm, 2, c(5:29), 106)
-
-# LC any symptom + Test negative
-do_overlap_LCany(cdm, 3, c(5:29), 107)
-
-# LC any symptom + Influenza
-do_overlap_LCany(cdm, 4, c(5:29), 108)
+# LC any symptom + Infection / Reinfection / Test negative / Influenza
+do_overlap_LCany(cdm, c(1:4), c(5:29), c(105:108))
 
 # LC code + Infection
 do_overlap(cdm, 1, 101, 109, washout = FALSE)
@@ -375,8 +371,8 @@ do_overlap(cdm, 3, 102, 115, washout = FALSE)
 do_overlap(cdm, 4, 102, 116, washout = FALSE)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = c(105:116), 
-                                           cohortName = c("LC any + inf","LC any + reinf","LC any + neg", "LC any + flu",
+                             dplyr::tibble(cohort_definition_id = c(105:116), 
+                                           cohort_name = c("LC any + inf","LC any + reinf","LC any + neg", "LC any + flu",
                                                           "LC code + inf","LC code + reinf","LC code + neg","LC code + flu",
                                                           "PASC any + inf","PASC any + reinf","PASC any + neg","PASC any + flu")))
 
@@ -387,8 +383,8 @@ do_overlap_vacc(cdm, 3,121)
 do_overlap_vacc(cdm, 4,123)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = c(117:124), 
-                                           cohortName = c("Inf + vacc","Inf + not vacc",
+                             dplyr::tibble(cohort_definition_id = c(117:124), 
+                                           cohort_name = c("Inf + vacc","Inf + not vacc",
                                                           "Reinf + vacc","Reinf + not vacc",
                                                           "Neg + vacc", "Neg + not vacc",
                                                           "Flu + vacc", "Flu + not vacc")))
@@ -403,8 +399,8 @@ for(i in base_ids) {
     if(cdm$studyathon_final_cohorts %>% filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
       do_overlap(cdm, i, j, i*200+j)
       names_final_cohorts <- rbind(names_final_cohorts,
-                                   dplyr::tibble(cohortId = i*200+j, 
-                                                 cohortName =paste0("Base ",i," outcome ",j) ))
+                                   dplyr::tibble(cohort_definition_id = i*200+j, 
+                                                 cohort_name =paste0("Base ",i," outcome ",j) ))
     }
   }
 }
@@ -425,8 +421,8 @@ do_overlap_vacc(cdm,115,920)
 do_overlap_vacc(cdm,116,922)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(cohortId = c(900:923), 
-                                           cohortName = c("Inf + LC any + vacc",
+                             dplyr::tibble(cohort_definition_id = c(900:923), 
+                                           cohort_name = c("Inf + LC any + vacc",
                                                           "Inf + LC any + not vacc",
                                                           "Reinf + LC any + vacc",
                                                           "Reinf + LC any + not vacc",

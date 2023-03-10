@@ -249,64 +249,71 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
                   schema = results_database_schema)
 }
 
-do_overlap_LCany <- function(cdm, base_cohort_id, outcomes_cohort_id, overlap_cohort_id) {
-  base <- cdm[["studyathon_final_cohorts"]] %>% 
-    dplyr::filter(cohort_definition_id == base_cohort_id)
-  
+do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_cohort_id) {
   # We build this cohort from the beginning, i.e. getting the initial instantiated symptom cohorts
   # and enforcing washout for each symptom with itself. Then we join all of them together
-  outcome <- cdm[["studyathon_lcpasc"]] %>% 
-    dplyr::filter(cohort_definition_id == outcomes_cohort_id[1]) %>%
+  first_outcome <- outcomes_cohort_id[1]
+  outcome <- cdm[["studyathon_lcpasc"]] %>%
+    dplyr::filter(cohort_definition_id == first_outcome) %>%
+    dplyr::filter(cohort_start_date > as.Date("2020-09-01")) %>%
     CohortProfiles::addCohortIntersect(cdm, "studyathon_lcpasc", 
-                                       cohortId = outcomes_cohort_id[1], value = "date",
+                                       cohortId = first_outcome, value = "date",
                                        window = c(-180,-1), order = "last") %>%
-    mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", paste0("date_studyathon_final_cohorts_",outcomes_cohort_id[1]))) %>%
-    filter(is.na(date_previous)) %>% dplyr::select(-c(paste0("date_studyathon_final_cohorts_",outcomes_cohort_id[1]),date_previous)) %>% compute()
+    mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", paste0("date_studyathon_lcpasc_",first_outcome))) %>%
+    filter(is.na(date_previous)) %>% dplyr::select(-c(paste0("date_studyathon_lcpasc_",first_outcome),date_previous)) %>% compute()
   outcomes_cohort_id <- outcomes_cohort_id[-1]
   for(i in outcomes_cohort_id) {
     outcome_next <- cdm[["studyathon_lcpasc"]] %>% 
       dplyr::filter(cohort_definition_id == i) %>%
+      dplyr::filter(cohort_start_date > as.Date("2020-09-01")) %>%
       CohortProfiles::addCohortIntersect(cdm, "studyathon_lcpasc", 
                                          cohortId = i, value = "date",
                                          window = c(-180,-1), order = "last") %>%
-      mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", paste0("date_studyathon_final_cohorts_",i))) %>%
-      filter(is.na(date_previous)) %>% dplyr::select(-c(paste0("date_studyathon_final_cohorts_",i),date_previous)) %>% compute()
+      mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", paste0("date_studyathon_lcpasc_",i))) %>%
+      filter(is.na(date_previous)) %>% dplyr::select(-c(paste0("date_studyathon_lcpasc_",i),date_previous)) %>% compute()
     outcome <- outcome %>% full_join(outcome_next, by = c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date"))
   }
   # As symptoms, end date equals start date
   outcome <- outcome %>% dplyr::mutate(cohort_end_date = cohort_start_date)
   # The overlap cohorts consists of individuals both in the base and outcome cohorts
-  overlap <- base %>% 
-    dplyr::inner_join(
-      outcome %>% 
-        dplyr::select(subject_id, outcome_date = cohort_start_date, 
-                      outcome_end = cohort_end_date),
-      by = "subject_id"
-    ) %>%
-    mutate(cohort_definition_id = overlap_cohort_id) %>%
-    mutate(time_diff = !!CDMConnector::datediff("outcome_date","cohort_start_date")) %>%
-    dplyr::filter(time_diff < -90 & time_diff > -366) %>%
-    dplyr::select(-time_diff) %>% 
-    group_by(subject_id,cohort_start_date) %>%
-    window_order(.data$outcome_date) %>%
-    mutate(seq = row_number()) %>%
-    window_order() %>% 
-    distinct() %>% 
-    ungroup() %>%
-    filter(seq == 1) %>% 
-    mutate(cohort_end_date = min(cohort_end_date, outcome_date)) %>%
-    compute()
-  # We are only asking for the first outcome event in the window of interest, per each index base event
-  
-  overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
-    compute()
-  appendPermanent(overlap, name = "studyathon_final_cohorts",
-                  schema = results_database_schema)
+  # We do it for the four of them as the creation of the outcome cohort is very expensive
+  for(j in bases_cohort_id) {
+    overlap_cohort_id <- overlaps_cohort_id[j]
+    
+    base <- cdm[["studyathon_final_cohorts"]] %>% 
+      dplyr::filter(cohort_definition_id == j)
+    overlap <- base %>% 
+      dplyr::inner_join(
+        outcome %>% 
+          dplyr::select(subject_id, outcome_date = cohort_start_date, 
+                        outcome_end = cohort_end_date),
+        by = "subject_id"
+      ) %>%
+      mutate(cohort_definition_id = overlap_cohort_id) %>%
+      mutate(time_diff = !!CDMConnector::datediff("outcome_date","cohort_start_date")) %>%
+      dplyr::filter(time_diff < -90 & time_diff > -366) %>%
+      dplyr::select(-time_diff) %>% 
+      group_by(subject_id,cohort_start_date) %>%
+      window_order(.data$outcome_date) %>%
+      mutate(seq = row_number()) %>%
+      window_order() %>% 
+      distinct() %>% 
+      ungroup() %>%
+      filter(seq == 1) %>% 
+      mutate(cohort_end_date = min(cohort_end_date, outcome_date)) %>%
+      compute()
+    # We are only asking for the first outcome event in the window of interest, per each index base event
+    
+    overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
+      compute()
+     appendPermanent(overlap, name = "studyathon_final_cohorts",
+                    schema = results_database_schema)
+  }
 }
 
 create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE, end_outcome = TRUE) {
   for(i in window){
-    name_cohort <- initialCohortSet$cohortName[i]
+    name_cohort <- initialCohortSet$cohort_name[i]
     current <- cdm[["studyathon_lcpasc"]] %>% 
       dplyr::filter(.data$cohort_definition_id == i) %>% dplyr::select(
         "subject_id",
@@ -405,8 +412,8 @@ do_strata_calendar <- function(cdm, base_id, new_id) {
                   schema = results_database_schema)
   
   names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(cohortId = c(new_id,new_id+1), 
-                                             cohortName =c(paste0("Cohort ",i," Delta" ),
+                               dplyr::tibble(cohort_definition_id = c(new_id,new_id+1), 
+                                             cohort_name =c(paste0("Cohort ",i," Delta" ),
                                                            paste0("Cohort ",i," Omicron" ))))
   
 }

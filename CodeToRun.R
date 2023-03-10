@@ -26,6 +26,7 @@ library("networkD3")
 library(IncidencePrevalence)
 library(CohortProfiles)
 library(LargeScaleCharacteristics)
+library(TreatmentPatterns)
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
@@ -72,8 +73,10 @@ latest_data_availability <- as.Date("...")
 # Decide which parts of the study you want to run 
 readInitialCohorts <- TRUE
 getStudyCohorts <- TRUE
+doCohortDiagnostics <- TRUE
 doIncidencePrevalence <- TRUE
 doCharacterisation <- TRUE
+doDrugUtilisation <- TRUE
 doTreatmentPatterns <- TRUE
 doClustering <- TRUE
 doTrajectories <- TRUE
@@ -83,6 +86,9 @@ vaccine_data <- TRUE # Set to FALSE if you have no information on vaccination
 # whatsoever - and thus cannot stratify by it
 vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination,
 # but not on vaccine brand
+
+# Create counts table of Cohort Diagnostics
+tableCohortDiagnostics <- FALSE
 
 # Run the study
 source(here("RunStudy.R"))

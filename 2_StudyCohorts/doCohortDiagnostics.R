@@ -10,14 +10,14 @@ cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema
                   cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts"))
 
 # Get cohort definition files
-cohortJsonFiles <- list.files(here("1_InstantiateCohorts", "Jsons"))
+cohortJsonFiles <- list.files(here("1_InitialCohorts", "Jsons"))
 cohortJsonFiles <- cohortJsonFiles[str_detect(cohortJsonFiles,".json")]
 
 cohortDefinitionSet <- list()
 id_jsons_interest <- c(1,2,3,4,64)
 for(i in c(1:5)){
   id <- id_jsons_interest[i]
-  working.json<-here("1_InstantiateCohorts", "Jsons",
+  working.json<-here("1_InitialCohorts", "Jsons",
                      cohortJsonFiles[id])
   cohortJson <- readChar(working.json, file.info(working.json)$size)
   cohortExpression <- cohortExpressionFromJson(cohortJson) # generates the sql
@@ -35,6 +35,9 @@ for(i in c(1:5)){
 cohortDefinitionSet<-bind_rows(cohortDefinitionSet)
 cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "studyathon_lcpasc")
 
+CohortGenerator::createCohortTables(connectionDetails= connectionDetails,
+                                    cohortDatabaseSchema = results_database_schema,
+                                    cohortTableNames = cohortTableNames)
 # Tables in the database already created
 # Generate the cohort set
 CohortGenerator::generateCohortSet(connectionDetails= connectionDetails,

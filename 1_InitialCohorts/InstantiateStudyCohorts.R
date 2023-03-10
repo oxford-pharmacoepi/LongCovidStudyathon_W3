@@ -9,7 +9,7 @@ Initial_cohorts <- CDMConnector::readCohortSet(
 info(logger, "- getting initial cohorts")
 
 cdm <- CDMConnector::generateCohortSet(cdm, Initial_cohorts,
-                                       cohortTableName = "studyathon_lcpasc",
+                                       name = "studyathon_lcpasc",
                                        overwrite = TRUE)
 
 info(logger, "- got initial cohorts")

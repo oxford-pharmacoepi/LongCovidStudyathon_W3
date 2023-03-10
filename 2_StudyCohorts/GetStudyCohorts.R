@@ -182,7 +182,7 @@ message("Getting strata cohorts")
 info(logger, '-- Getting strata cohorts')
 
 #K
-# Do different in GOLD!
+# Missingness in cohort_start_date and cohort_end_date in 103,350,351 and 352. Check
 
 # Vaccinated people
 if(vaccine_data && db.name != "CPRDGold") {
@@ -272,6 +272,7 @@ if(vaccine_data && db.name != "CPRDGold") {
       "cohort_start_date",
       "cohort_definition_id"
     ) %>% group_by(subject_id) %>% arrange(.data$cohort_start_date) %>%
+    dplyr::filter(!is.na(cohort_start_date)) %>%
     mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
   # Only one and more than one dose
   vaccinated_multiple <- vaccinated %>%
@@ -286,14 +287,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::filter(cohort_definition_id == 3) %>%
     compute()
   # Cohort fully vaccinated (one JJ dose or two any doses), add 14 days to vaccination day for full coverage
-  vaccinated <- vaccinated_JJ %>% dplyr::union(vaccinated_multiple) %>%
-    dplyr::rename(vacc_date = cohort_start_date) %>%
-    dplyr::group_by(subject_id) %>%
-    dplyr::summarise(
-      cohort_start_date = min(vacc_date, na.rm = TRUE)
-    ) %>% dplyr::mutate(cohort_definition_id = 103) %>%
+  vaccinated <- vaccinated %>% dplyr::mutate(cohort_definition_id = 103) %>%
     left_join(observation_death, by = c("subject_id")) %>%
     mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::filter(!is.na(cohort_end_date)) %>%
     mutate(cohort_start_date = cohort_start_date + lubridate::days(14)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
@@ -313,16 +310,19 @@ if(vaccine_data && db.name != "CPRDGold") {
   vaccinated_first <- vaccinated_first %>% mutate(cohort_definition_id = 350) %>%
     left_join(observation_death, by = c("subject_id")) %>%
     mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::filter(!is.na(cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   vaccinated_second <- vaccinated_second %>% mutate(cohort_definition_id = 351) %>%
     left_join(observation_death, by = c("subject_id")) %>%
     mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::filter(!is.na(cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   vaccinated_third <- vaccinated_third %>% mutate(cohort_definition_id = 352) %>%
     left_join(observation_death, by = c("subject_id")) %>%
     mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::filter(!is.na(cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   

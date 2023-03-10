@@ -1,28 +1,33 @@
 do_vaccination_characterisation <- function(cohort_ids_interest, stem_name) {
   cohorts_interest <- cdm[["studyathon_final_cohorts"]] %>% 
     dplyr::filter(cohort_definition_id %in% cohort_ids_interest)
-  cohorts_interest <- cohorts_interest %>% 
+  cohorts_interest_first <- cohorts_interest %>% 
     CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
                              cohortId = 350,
                              window = c(NA,0),
                              value = "binary") %>% compute()
-  cohorts_interest <- cohorts_interest %>% 
+  cohorts_interest_second <- cohorts_interest %>% 
     CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
                              cohortId = 351,
                              value = "binary",
                              window = c(NA,0)) %>% compute()
-  cohorts_interest <- cohorts_interest %>% 
+  cohorts_interest_third <- cohorts_interest %>% 
     CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
                              cohortId = 352,
                              window = c(NA,0),
                              value = "binary") %>% compute()
-  cohorts_interest <- cohorts_interest %>% 
+  cohorts_interest_last <- cohorts_interest %>% 
     CohortProfiles::addCohortIntersect(cdm, "studyathon_final_cohorts", 
                              cohortId = 103,
                              value = "date",
                              window = c(NA,0), order = "last") %>% compute()
   
+  # This has to be done like this now, as addCohortIntersect cannot be "chained"
   cohorts_interest <- cohorts_interest %>% 
+    dplyr::left_join(cohorts_interest_first, by =c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>%
+    dplyr::left_join(cohorts_interest_second, by =c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>%
+    dplyr::left_join(cohorts_interest_third, by =c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>%
+    dplyr::left_join(cohorts_interest_last, by =c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>%
     mutate(dose = binary_studyathon_final_cohorts_350 + binary_studyathon_final_cohorts_351 + binary_studyathon_final_cohorts_352) %>%
     mutate(last_dose_days = CDMConnector::datediff("date_studyathon_final_cohorts_103","cohort_start_date")) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date,dose,last_dose_days) %>% 

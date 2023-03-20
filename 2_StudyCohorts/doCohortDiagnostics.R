@@ -6,15 +6,16 @@ if (!file.exists(output_cd)){
   dir.create(output_cd, recursive = TRUE)}
 
 # Run diagnostics of the base cohorts and the LC code cohort (pre-inclusion and exclusion criteria)
+names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts"))
+                  cohortTables = names_in_cdm)
 
 # Get cohort definition files
 cohortJsonFiles <- list.files(here("1_InitialCohorts", "Jsons"))
 cohortJsonFiles <- cohortJsonFiles[str_detect(cohortJsonFiles,".json")]
 
 cohortDefinitionSet <- list()
-id_jsons_interest <- c(1,2,3,4,64)
+id_jsons_interest <- c(1,2,3,4,101)
 for(i in c(1:5)){
   id <- id_jsons_interest[i]
   working.json<-here("1_InitialCohorts", "Jsons",
@@ -33,7 +34,7 @@ for(i in c(1:5)){
                                    generateStats=TRUE)
 }
 cohortDefinitionSet<-bind_rows(cohortDefinitionSet)
-cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = "studyathon_lcpasc")
+cohortTableNames <- CohortGenerator::getCohortTableNames(cohortTable = InitialCohortsName)
 
 CohortGenerator::createCohortTables(connectionDetails= connectionDetails,
                                     cohortDatabaseSchema = results_database_schema,
@@ -46,15 +47,14 @@ CohortGenerator::generateCohortSet(connectionDetails= connectionDetails,
                                    cohortTableNames = cohortTableNames,
                                    cohortDefinitionSet = cohortDefinitionSet)
 
-# Base cohorts instantiated as json or inclusion/exclusion tables afterwards?
-# Cohorts 1, 2, 3, 4 and 64
+# Cohorts 1, 2, 3, 4 and 101
 if(tableCohortDiagnostics) {
   CohortDiagnostics::createCountsTable()
 }
 CohortDiagnostics::executeDiagnostics(cohortDefinitionSet,
                                       connectionDetails = connectionDetails,
-                                      cohortTable = "studyathon_lcpasc",
-                                      cohortIds = c(1,2,3,4,64),
+                                      cohortTable = InitialCohortsName,
+                                      cohortIds = c(1,2,3,4,101),
                                       cohortDatabaseSchema = results_database_schema,
                                       cdmDatabaseSchema = cdm_database_schema,
                                       exportFolder = output_cd,

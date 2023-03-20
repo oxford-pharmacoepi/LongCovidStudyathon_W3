@@ -35,6 +35,9 @@ db.name <- "..."
 # desired path
 output.folder <- here("Results",db.name)
 
+# Stem to use for the cohort tables in the database
+table_stem <- "..."
+
 # Change the following parameters with your own database information
 user <- Sys.getenv("...")
 password <- Sys.getenv("...")

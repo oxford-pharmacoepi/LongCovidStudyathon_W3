@@ -4,7 +4,7 @@
   "maximumDaysBetweenEvents": [365],
   "minPatientsPerEventPair": [100],
   "addConditions": [true],
-  "addObservations": [true],
+  "addObservations": [false],
   "addProcedures": [false],
   "addDrugExposures": [true],
   "addDrugEras": [false],
@@ -13,5 +13,5 @@
   "daysBeforeIndexDate": [0],
   "cohortName": ["Long Covid"],
   "description": ["Long COVID study"],
-  "RRrangeToSkip": [0.7, 1.3]
+  "RRrangeToSkip": [0.8, 1.2]
 }

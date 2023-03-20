@@ -1,8 +1,8 @@
 # Clustering 
 
-cdm <- cdmFromCon(
-  db, cdm_database_schema, writeSchema = results_database_schema, 
-  cohortTables = c("studyathon_lcpasc","studyathon_final_cohorts","lc_pasc_hucohorts"))
+names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = names_in_cdm)
 
 # Output folders for WP3
 output_clustering <- file.path(tempDir,"Clustering")
@@ -17,49 +17,51 @@ if (!file.exists(output_clustering)){
 info(logger, '-- Calculating LCA clustering')
 
 # First get all people with LC symptoms (overlap with infection cohort at base)
-symptoms_LC <- cdm[["studyathon_final_cohorts"]] %>% 
-  dplyr::filter(cohort_definition_id %in% c(205:229))
-# Mutate LC code cohort id from 109 to 264 to make the code easier
+symptoms_LC <- cdm[[OverlapCohortsIPName]] %>% 
+  dplyr::filter(.data$cohort_definition_id %in% c(1:25))
 symptoms_LC <- symptoms_LC %>%
   dplyr::full_join(
-    cdm[["studyathon_final_cohorts"]] %>% 
-      dplyr::filter(cohort_definition_id == 109) %>%
-      dplyr::mutate(cohort_definition_id = 264)
+    cdm[[OverlapCohortsCName]] %>% 
+      dplyr::filter(.data$cohort_definition_id == 5) %>%
+      dplyr::mutate(cohort_definition_id = 27)
   )
+names_symptoms <- names_final_cohorts %>% 
+  dplyr::filter(.data$table_name == LongCovidCohortsName) %>%
+  dplyr::filter(.data$cohort_definition_id %in% c(1:25,27)) %>%
+  dplyr::select(cohort_definition_id, cohort_name) %>% compute()
+
 symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(cdm) %>% 
   CohortProfiles::addSex(cdm) %>% collect()
 symptoms_LC <- symptoms_LC %>% 
-  mutate(cohort_definition_id = cohort_definition_id - 200) %>% 
-  left_join(Initial_cohorts %>% dplyr::select(cohortId,cohortName) %>% 
-              mutate(cohort_definition_id = as.numeric(cohortId)), 
+  dplyr::left_join(names_symptoms, 
             by = c("cohort_definition_id")) %>% 
-  dplyr::select(cohortName,subject_id,age,sex)
+  dplyr::select(cohort_name,subject_id,age,sex)
 
 # Get the names of the symptoms or LC code
-names_symptoms <- symptoms_LC %>% dplyr::select(cohortName) %>% distinct() %>% 
+names_symptoms <- symptoms_LC %>% dplyr::select(cohort_name) %>% distinct() %>% 
   pull()
 
 # Create table with columns of symptoms, 1 if individual has it, 0 otherwise
 i = 1
 working_name <- names_symptoms[i]
 working_name <- enquo(working_name)
-data_LCA <- symptoms_LC %>% filter(cohortName == !!working_name) %>% 
-  mutate(!!working_name := as.integer(1)) %>% 
+data_LCA <- symptoms_LC %>% dplyr::filter(cohort_name == !!working_name) %>% 
+  dplyr::mutate(!!working_name := as.integer(1)) %>% 
   dplyr::select(subject_id,!!working_name)
 
 for(i in 2:length(names_symptoms)) {
   working_name <- names_symptoms[i]
   working_name <- enquo(working_name)
   data_LCA <- data_LCA %>% full_join(symptoms_LC %>% 
-                                       filter(cohortName == !!working_name) %>% 
-                                       mutate(!!working_name := as.integer(1)) %>% 
+                                       dplyr::filter(cohort_name == !!working_name) %>% 
+                                       dplyr::mutate(!!working_name := as.integer(1)) %>% 
                                        dplyr::select(subject_id,!!working_name), 
                                      by = c("subject_id"))
   
 }
 data_LCA[is.na(data_LCA)] <- 0
 data_LCA <- data_LCA %>% distinct()
-data_LCA <- data_LCA %>% left_join(symptoms_LC %>% 
+data_LCA <- data_LCA %>% dplyr::left_join(symptoms_LC %>% 
                                      dplyr::select(subject_id,age,sex), 
                                    by = "subject_id")
 
@@ -93,7 +95,7 @@ LCA_models <- list()
 for(i in 2:7){
   lc <- poLCA(f, mydata, nclass=i, maxiter=2000, graphs = TRUE,
               tol=1e-5, na.rm=FALSE,  
-              nrep=50, verbose=TRUE, calc.se=TRUE)
+              nrep=100, verbose=TRUE, calc.se=TRUE)
     LCA_models[[i-1]] <- lc
 }    	
 # nrep, maxiter or the number of classes can be tuned later on if for some databases convergence or IC output does not look right
@@ -185,7 +187,7 @@ for(i in length(mean_posterior)) {
 # Save all model outputs
 for(k in 2:7) {
   lc <- LCA_models[[k-1]]
-  for(i in 1:length(lc)) {
+  for(i in 1:(length(lc)-1)) {
     write.csv(
       lc[[i]],
       file = here::here(output_clustering, paste0("Clustering_LCA_model",k,"_",names(lc)[i],".csv")),
@@ -263,57 +265,127 @@ write.csv(
 )
 
 # Look at healthcare utilisation outcomes
-cohort_LC <- cdm[["studyathon_final_cohorts"]] %>% 
-  dplyr::filter(cohort_definition_id %in% c(109,205:229))
+
+# Gte hospitalisation codes
+ip.codes <- c(9201, 262)
+# add all descendents
+ip.codes.w.desc <- cdm$concept_ancestor %>%
+  filter(ancestor_concept_id  %in% ip.codes ) %>% 
+  collect() %>% 
+  select(descendant_concept_id) %>% 
+  distinct() %>% 
+  pull()
+
+cohort_LC <- cdm[[OverlapCohortsIPName]] %>% 
+  dplyr::filter(.data$cohort_definition_id %in% c(1:25))
+cohort_LC <- cohort_LC %>%
+  dplyr::full_join(
+    cdm[[OverlapCohortsCName]] %>% 
+      dplyr::filter(.data$cohort_definition_id == 5) %>%
+      dplyr::mutate(cohort_definition_id = 27))
+
 cohort_LC <- cohort_LC %>% 
-  CohortProfiles::addCohortIntersect(cdm, cohortTableName = "lc_pasc_hucohorts", 
-                                     value = c("number", "time"), order = "last", 
-                                     window = c(-365,-1)) %>%
-  CohortProfiles::addTableIntersect(cdm, tableName = "visit_occurrence", 
-                                    value = c("number", "time"), order = "last",
-                                    window = c(-365, -1))
+  addEvent(cdm, HUCohortsName, 1, c(-365,-1), "last_icu", order = "last") %>%
+  addEvent(cdm, HUCohortsName, 2, c(-365,-1), "last_vent", order = "last") %>%
+  addEvent(cdm, HUCohortsName, 3, c(-365,-1), "last_trach", order = "last") %>%
+  addEvent(cdm, HUCohortsName, 4, c(-365,-1), "last_ecmo", order = "last") %>%
+  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 1), c(-365,-1), "number_icu") %>%
+  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 2), c(-365,-1), "number_vent") %>%
+  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 3), c(-365,-1), "number_trach") %>%
+  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 4), c(-365,-1), "number_ecmo") %>%
+  addNumberVisit(cdm, 9202, c(-365,-1)) %>% 
+  addEvent(cdm, "visit_occurrence", 9202, c(-365,-1), "last_GP", eventDate = "visit_start_date", order = "last") %>%
+  compute()
 
-HU_summary <- cohort_LC %>% 
-  dplyr::group_by(cluster_assignment) %>%
-  dplyr::summarise(mean_number_ICU = mean(number_lc_pasc_hucohorts_1), 
-                   mean_number_ventilation = mean(number_lc_pasc_hucohorts_2),
-                   mean_number_tracheostomy = mean(number_lc_pasc_hucohorts_3), 
-                   mean_number_ECMO = mean(number_lc_pasc_hucohorts_4),
-                   mean_number_GP = mean("number_visit_occurrence_(-365,-1)"),
-                   sum_ICU = sum(number_lc_pasc_hucohorts_1), 
-                   sum_ventilation = sum(number_lc_pasc_hucohorts_2),
-                   sum_tracheostomy = sum(number_lc_pasc_hucohorts_3), 
-                   sum_ECMO = sum(number_lc_pasc_hucohorts_4),
-                   sum_GP = sum("number_visit_occurrence_(-365,-1)"),
-                   mean_time_ICU = mean(time_lc_pasc_hucohorts_1),
-                   mean_time_ventilation = mean(time_lc_pasc_hucohorts_2),
-                   mean_time_tracheostomy = mean(time_lc_pasc_hucohorts_3),
-                   mean_time_ECMO = mean(time_lc_pasc_hucohorts_4),
-                   mean_time_GP = mean("time_visit_occurrence_(-365,-1)"),
-                   var_number_ICU = var(number_lc_pasc_hucohorts_1), 
-                   var_number_ventilation = var(number_lc_pasc_hucohorts_2),
-                   var_number_tracheostomy = var(number_lc_pasc_hucohorts_3), 
-                   var_number_ECMO = var(number_lc_pasc_hucohorts_4),
-                   var_number_GP = var("number_visit_occurrence_(-365,-1)"),
-                   var_time_ICU = var(time_lc_pasc_hucohorts_1),
-                   var_time_ventilation = var(time_lc_pasc_hucohorts_2),
-                   var_time_tracheostomy = var(time_lc_pasc_hucohorts_3),
-                   var_time_ECMO = var(time_lc_pasc_hucohorts_4),
-                   var_time_GP = var("time_visit_occurrence_(-365,-1)"),
-                   .groups = 'drop')
+cohort_LC <- cohort_LC %>% 
+  dplyr::left_join(mydata %>% dplyr::select("subject_id", "cluster_assignment"), 
+                   by = "subject_id", copy = TRUE) %>%
+  compute()
 
-
-# Add hospitalisation and sick leave when available too
-
-#cohort_LC_computed <- cohort_LC %>% compute()  %>% as_tibble() %>% left_join(mydata %>% dplyr::select(subject_id, cluster_assignment), by = "subject_id")
+HU_summary <- cohort_LC %>%
+  dplyr::rename("number_GP" = "number_visit") %>%
+  dplyr::ungroup() %>%
+  dplyr::group_by(cohort_definition_id) %>%
+  dplyr::mutate(time_GP = !!CDMConnector::datediff("last_GP", "cohort_start_date")) %>%
+  dplyr::mutate(time_icu = !!CDMConnector::datediff("last_icu", "cohort_start_date")) %>%
+  dplyr::mutate(time_vent = !!CDMConnector::datediff("last_vent", "cohort_start_date")) %>%
+  dplyr::mutate(time_trach = !!CDMConnector::datediff("last_trach", "cohort_start_date")) %>%
+  dplyr::mutate(time_ecmo = !!CDMConnector::datediff("last_ecmo", "cohort_start_date")) %>%
+  dplyr::select(dplyr::starts_with(c("number","time"))) %>%
+  dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+  dplyr::arrange(cohort_definition_id) %>%
+  compute()
 
 write.csv(
   HU_summary,
+  file = here::here(output_clustering, paste0("Cluster_healthcare_Utilisation_noHosp.csv")),
+  row.names = FALSE
+)
+
+cohort_LC <- cohort_LC %>% dplyr::select(-dplyr::contains(c("time", "number", "last"))) %>%
+  addNumberVisit(cdm, ip.codes.w.desc, c(-365,-1)) %>% 
+  addEvent(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
+  compute()
+
+cohort_LC <- cohort_LC %>% 
+  dplyr::left_join(mydata %>% dplyr::select(subject_id, cluster_assignment), 
+                   by = "subject_id", copy = TRUE) %>%
+  compute()
+
+if(all(c("number_visit", "last_hosp") %in% colnames(cohort_LC))) {
+  HU_hosp_summary <- cohort_LC %>%
+    dplyr::rename("number_hosp" = "number_visit") %>%
+    dplyr::ungroup() %>%
+    dplyr::group_by(cohort_definition_id) %>%
+    mutate(time_visit = !!CDMConnector::datediff("last_hosp", "cohort_start_date")) %>%
+    dplyr::select(dplyr::starts_with(c("number","time"))) %>%
+    dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+    dplyr::arrange(cohort_definition_id) %>%
+    compute()
+  # K is it a cbind?
+  HU_summary_final <- cbind(HU_summary,HU_hosp_summary)
+} else {
+  HU_summary_final <- HU_summary
+}
+
+write.csv(
+  HU_summary_final,
   file = here::here(output_clustering, paste0("Cluster_healthcare_Utilisation.csv")),
   row.names = FALSE
 )
 
 
+# Get nice plots for all models too
+for(k in c(2:7)) {
+  lc <- LCA_models[[k-1]] 
+  # selected according to previous plot, for now we get the one with the lowest bic. Should do it consciously in April
+  
+  lcmodel <- reshape2::melt(lc$probs, level=2)
+  lcmodel$L2 <- stringr::str_to_title(lcmodel$L2)
+  for(i in 1:length(names_symptoms)) {
+    lcmodel$L2[lcmodel$L2 == paste0("Lc_",i)] <- names_symptoms[i]
+    
+  }
+  
+  # Get nice plot of class membership
+  zp1 <- ggplot(lcmodel,aes(x = L2, y = value, fill = Var2))
+  zp1 <- zp1 + geom_bar(stat = "identity", position = "stack")
+  zp1 <- zp1 + facet_grid(Var1 ~ .) 
+  zp1 <- zp1 + scale_fill_brewer(type="seq", palette="Blues",labels = c("No symptom", "Symptom")) +theme_bw()
+  zp1 <- zp1 + labs(x = "Symptoms",y=paste0("Prevalence syptoms in ", db.name), fill ="Response categories")	#x = "Questionnaire items"
+  zp1 <- zp1 + theme( axis.text.y=element_blank(),
+                      axis.ticks.y=element_blank(),                    
+                      panel.grid.major.y=element_blank(),
+                      axis.text.x=element_text(size=10, angle = 90, vjust = 0.5, hjust=1))
+  zp1 <- zp1 + guides(fill = guide_legend(reverse=TRUE))
+  
+  # Include prevalence average lines
+  for (i in 1:length(factors)) {
+    zp1 <- zp1 + geom_segment(x = (i - 0.5), y = factors[[i]], xend = (i + 0.5), yend = factors[[i]])
+  }
+  ggsave(here::here(output_clustering, paste0("Clustering_LCA_",k,"_clusters.jpg")))
+  
+}
 
 # -------------------------------------------------------------------------------------------
 # NETWORK VISUALISATION AND COMMUNITY DETECTION
@@ -348,7 +420,7 @@ tol <- c(0.05, 0.1, 0.15, 0.2, 0.25, 0.3)
 for(t in tol) {
   phi_test <- phi_matrix
   phi_test <- abs(phi_test) 
-  phi_test[phi_test < tol] <- 0 
+  phi_test[phi_test < t] <- 0 
   diag(phi_test) <- 0 # We don't care about obvious correlation of each variable with itself
   
   # Build network with nodes symptoms, edges phi coefficient using igraph package
@@ -362,7 +434,7 @@ for(t in tol) {
   plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
   # layout_in_circle(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
   
-  png(here::here(output_clustering, paste0("Network_",tol,".png")), res = 150, height = 800, width = 1100)
+  png(here::here(output_clustering, paste0("Network_",t,".png")), res = 150, height = 800, width = 1100)
   plot(ig, vertex.label.dist = 2, vertex.label.cex = 0.8)
   dev.off()
 }
@@ -422,7 +494,7 @@ membership(c7)
 communities(c7)
 
 png(here::here(output_clustering, "Modularity_CM.png"), res = 150, height = 800, width = 1100)
-plot(c7)
+plot(c7,ig_full)
 dev.off()
 
 capture.output(communities(c7), file = here::here(output_clustering, "Communities_CM.txt"))

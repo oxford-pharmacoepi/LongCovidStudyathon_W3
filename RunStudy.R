@@ -16,6 +16,26 @@ logger <- create.logger()
 logfile(logger) <- log_file
 level(logger) <- "INFO"
 
+# Create table names to use throughout the study
+InitialCohortsName <- paste0(table_stem,"_initialcohorts")
+BaseCohortsName <- paste0(table_stem,"_basecohorts")
+LongCovidCohortsName <- paste0(table_stem,"_lccohorts")
+PascCohortsName <- paste0(table_stem,"_pasccohorts")
+MedCondCohortsName <- paste0(table_stem,"_mccohorts")
+OverlapCohortsCName <- paste0(table_stem,"_overlapccohorts")
+OverlapCohortsIPName <- paste0(table_stem,"_overlapipcohorts")
+HUCohortsName <- paste0(table_stem,"_hucohorts")
+TrajCohortsName <- paste0(table_stem,"_trajcohort")
+VaccCohortsName <- paste0(table_stem,"_vacccohorts")
+
+# Create vector with all names
+CohortNames <- c(InitialCohortsName, BaseCohortsName, LongCovidCohortsName,
+                 PascCohortsName, MedCondCohortsName, OverlapCohortsCName,
+                 OverlapCohortsIPName, HUCohortsName, TrajCohortsName)
+
+# get functions used throughout this study
+source(here::here("functions.R"))
+
 # Read initial cohorts
 if (readInitialCohorts){
   info(logger, 'INSTANTIATING INITIAL COHORTS')

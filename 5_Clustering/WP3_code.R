@@ -30,8 +30,8 @@ names_symptoms <- names_final_cohorts %>%
   dplyr::filter(.data$cohort_definition_id %in% c(1:25,27)) %>%
   dplyr::select(cohort_definition_id, cohort_name) %>% compute()
 
-symptoms_LC <- symptoms_LC %>% CohortProfiles::addAge(cdm) %>% 
-  CohortProfiles::addSex(cdm) %>% collect()
+symptoms_LC <- symptoms_LC %>% PatientProfiles::addAge(cdm) %>% 
+  PatientProfiles::addSex(cdm) %>% collect()
 symptoms_LC <- symptoms_LC %>% 
   dplyr::left_join(names_symptoms, 
             by = c("cohort_definition_id")) %>% 

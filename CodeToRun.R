@@ -24,7 +24,7 @@ library("networkD3")
 
 # get with remotes
 library(IncidencePrevalence)
-library(CohortProfiles)
+library(PatientProfiles)
 library(LargeScaleCharacteristics)
 library(TreatmentPatterns)
 

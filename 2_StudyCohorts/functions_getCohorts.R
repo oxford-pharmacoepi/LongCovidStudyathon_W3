@@ -437,9 +437,9 @@ do_strata_calendar <- function(cdm, base_id, new_id) {
 
 do_sex_strata <- function(cohort_id, new_id, tableName) {
   sex_strata <- cdm[[tableName]] %>% dplyr::filter(.data$cohort_definition_id == cohort_id)
-  females <- sex_strata %>% CohortProfiles::addSex(cdm) %>% dplyr::filter(sex == "Female") %>% 
+  females <- sex_strata %>% PatientProfiles::addSex(cdm) %>% dplyr::filter(sex == "Female") %>% 
     dplyr::mutate(cohort_definition_id = new_id) %>% compute()
-  males <- sex_strata %>% CohortProfiles::addSex(cdm) %>% 
+  males <- sex_strata %>% PatientProfiles::addSex(cdm) %>% 
     dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>%
     compute()
   appendPermanent(females, name = tableName,  schema = results_database_schema)
@@ -452,28 +452,28 @@ do_sex_strata <- function(cohort_id, new_id, tableName) {
 
 do_age_strata <- function(cohort_id, new_id, tableName) {
   age_strata <- cdm[[tableName]] %>% dplyr::filter(.data$cohort_definition_id == cohort_id)
-  age1 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age1 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(0:2)) %>% 
     dplyr::mutate(cohort_definition_id = new_id) %>% compute()
-  age2 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age2 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(3:5)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+1) %>% compute()
-  age3 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age3 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(6:9)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+2) %>% compute()
-  age4 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age4 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(10:13)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+3) %>% compute()
-  age5 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age5 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(14:17)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+4) %>% compute()
-  age6 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age6 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(18:40)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+5) %>% compute()
-  age7 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age7 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(41:64)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+6) %>% compute()
-  age8 <- age_strata %>% CohortProfiles::addAge(cdm) %>% 
+  age8 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
     dplyr::filter(.data$age %in% c(65:120)) %>% 
     dplyr::mutate(cohort_definition_id = new_id+7) %>% compute()
   

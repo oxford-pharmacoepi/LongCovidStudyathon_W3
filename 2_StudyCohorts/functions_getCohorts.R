@@ -18,7 +18,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   # Apply washout 
   cohort <- cohort %>% 
     addEvent(cdm, InitialCohortsName, id, c(NA,-1), order = "last") %>%
-    mutate(date_previous = !!CDMConnector::datediff(.data$cohort_start_date, .data$event)) %>%
+    mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
     compute()
   
   cohort <- cohort %>%
@@ -54,7 +54,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     # Historical influenza
     cohort <- cohort %>%
       addEvent(cdm, InitialCohortsName, 4, c(-influenza_look,-1), order = "last") %>%
-      dplyr::mutate(last_flu = !!CDMConnector::datediff(.data$cohort_start_date, .data$event)) %>% 
+      dplyr::mutate(last_flu = !!CDMConnector::datediff("cohort_start_date", "event")) %>% 
       compute()
     
     cohort <- cohort %>% dplyr::filter(is.na(.data$last_flu)) %>% compute()
@@ -191,7 +191,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     
     first_event <- first_event %>% dplyr::filter(is.na(.data$event)) %>% compute()
     attrition <- rbind(attrition, 
-                       dplyr::tibble(number_observations = .data$first_event %>% dplyr::tally()
+                       dplyr::tibble(number_observations = first_event %>% dplyr::tally()
                        %>% dplyr::pull(), reason = "Historical COVID-19"))
     first_event <- first_event %>% dplyr::select(-c(event)) %>% compute()
   }
@@ -201,9 +201,9 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
 
 do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName) {
   base <- cdm[[BaseCohortsName]] %>% 
-    dplyr::filter(.data$cohort_definition_id == base_cohort_id)
+    dplyr::filter(cohort_definition_id == base_cohort_id)
   outcome <- cdm[[tableName]] %>% 
-    dplyr::filter(.data$cohort_definition_id == outcome_cohort_id)
+    dplyr::filter(cohort_definition_id == outcome_cohort_id)
   overlap <- base %>% 
     dplyr::inner_join(
       outcome %>% 
@@ -213,15 +213,15 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     ) %>%
     dplyr::mutate(cohort_definition_id = overlap_cohort_id) %>%
     dplyr::mutate(time_diff = !!CDMConnector::datediff("outcome_date","cohort_start_date")) %>%
-    dplyr::filter(.data$time_diff < -90 & .data$time_diff > -366) %>%
-    dplyr::select(- .data$time_diff) %>% 
+    dplyr::filter(time_diff < -90 & time_diff > -366) %>%
+    dplyr::select(-time_diff) %>% 
     dplyr::group_by(subject_id,cohort_start_date) %>%
     dbplyr::window_order(.data$outcome_date) %>%
     dplyr::mutate(seq = row_number()) %>%
     dbplyr::window_order() %>% 
     distinct() %>% 
     ungroup() %>%
-    dplyr::filter(.data$seq == 1) %>% 
+    dplyr::filter(seq == 1) %>% 
     dplyr::mutate(cohort_end_date = min(.data$cohort_end_date, .data$outcome_date)) %>%
     compute()
   # We are only asking for the first outcome event in the window of interest, per each index base event
@@ -232,7 +232,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
       compute()
     if("event" %in% colnames(overlap)) {
       overlap <- overlap %>% 
-        dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", event)) %>%
+        dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
       dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% 
         compute()
     }
@@ -247,27 +247,27 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
 do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_cohort_id) {
   # We build this cohort from the beginning, i.e. getting the initial instantiated symptom cohorts
   # and enforcing washout for each symptom with itself. Then we join all of them together
-  message("outcome ", 1)
+  # message("outcome ", 5)
   first_outcome <- outcomes_cohort_id[1]
   outcome <- cdm[[InitialCohortsName]] %>%
     dplyr::filter(.data$cohort_definition_id == first_outcome) %>%
-    dplyr::filter(.data$cohort_start_date > as.Date("2020-09-01")) %>%
+    dplyr::filter(.data$cohort_start_date > as.Date("2017-01-01")) %>%
     addEvent(cdm, InitialCohortsName, first_outcome, c(-180,-1), order = "last") %>% 
     compute()
   if("event" %in% colnames(outcome)) {
-    outcome <- outcome %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", event)) %>%
+    outcome <- outcome %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
     dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
   }
   outcomes_cohort_id <- outcomes_cohort_id[-1]
   for(i in outcomes_cohort_id) {
-    message("outcome ", i)
+    # message("outcome ", i)
     outcome_next <- cdm[[InitialCohortsName]] %>% 
       dplyr::filter(.data$cohort_definition_id == i) %>%
-      dplyr::filter(.data$cohort_start_date > as.Date("2020-09-01")) %>%
+      dplyr::filter(.data$cohort_start_date > as.Date("2017-01-01")) %>%
       addEvent(cdm, InitialCohortsName, i, c(-180,-1), order = "last") %>%
       compute()
     if("event" %in% colnames(outcome_next)) {
-      outcome_next <- outcome_next %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", event)) %>%
+      outcome_next <- outcome_next %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
          filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
      }
     outcome <- outcome %>% dplyr::full_join(outcome_next, by = c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date"))
@@ -290,23 +290,23 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
       ) %>%
       dplyr::mutate(cohort_definition_id = overlap_cohort_id) %>%
       dplyr::mutate(time_diff = !!CDMConnector::datediff("outcome_date","cohort_start_date")) %>%
-      dplyr::filter(.data$time_diff < -90 & .data$time_diff > -366) %>%
-      dplyr::select(- .data$time_diff) %>% 
+      dplyr::filter(time_diff < -90 & time_diff > -366) %>%
+      dplyr::select(- time_diff) %>% 
       dplyr::group_by(subject_id,cohort_start_date) %>%
       dbplyr::window_order(.data$outcome_date) %>%
       dplyr::mutate(seq = row_number()) %>%
       dbplyr::window_order() %>% 
       distinct() %>% 
       ungroup() %>%
-      dplyr::filter(.data$seq == 1) %>% 
-      dplyr::mutate(cohort_end_date = min(.data$cohort_end_date, .data$outcome_date)) %>%
+      dplyr::filter(seq == 1) %>% 
+      dplyr::mutate(cohort_end_date = min(cohort_end_date, outcome_date)) %>%
       compute()
     # We are only asking for the first outcome event in the window of interest, per each index base event
     
     overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       compute()
     if(j == 1) {
-      computeQuery(overlap, name = OverlapCohortsCName,
+      computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
     } else {
       appendPermanent(overlap, name = OverlapCohortsCName,
@@ -320,15 +320,15 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
   counter <- 1
   for(i in window){
     new_id <- new_ids[counter]
-    name_cohort <- initialCohortSet$cohort_name[i]
+    name_cohort <- Initial_cohorts$cohort_name[i]
     current <- cdm[[InitialCohortsName]] %>% 
-      dplyr::filter(.data$cohort_definition_id == i) %>% dplyr::select(
+      dplyr::filter(cohort_definition_id == i) %>% dplyr::select(
         "subject_id",
         "cohort_start_date"
       ) %>% compute() 
     
     if(filter_start) {
-      current <- current %>% dplyr::filter(.data$cohort_start_date > study_start_date) %>%
+      current <- current %>% dplyr::filter(cohort_start_date > study_start_date) %>%
         compute()
     }
     
@@ -339,7 +339,7 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
         dplyr::mutate(seq = row_number()) %>% distinct() %>% 
         ungroup() %>% compute()
       current <- current %>% dplyr::filter(.data$seq == 1) %>% 
-        dplyr::select(-.data$seq) %>% compute()
+        dplyr::select(-seq) %>% compute()
     }
     
     current <- current %>% dplyr::left_join(observation_death, by = c("subject_id")) %>%
@@ -353,7 +353,7 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     current <- current %>% dplyr::mutate(cohort_definition_id = new_id) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
     if(new_id == 1) {
-      computeQuery(current, name = tableName,
+      computeQuery(current, name = tableName, temporary = FALSE,
                       schema = results_database_schema, overwrite = TRUE)
     } else {
       appendPermanent(current, name = tableName,
@@ -365,18 +365,18 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
 
 create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
   cohorts <- cdm[[tableName]] %>%
-    dplyr::filter(.data$cohort_definition_id %in% window)
+    dplyr::filter(cohort_definition_id %in% window)
   # For the LC any cohort, we don't want only the first event, as we will do washout in the overlap ones
   if(LC) {
-    any_cohort <- cohorts %>% dplyr::select(-.data$cohort_definition_id) %>%
+    any_cohort <- cohorts %>% dplyr::select(-cohort_definition_id) %>%
       dplyr::mutate(cohort_definition_id = cohort_id) %>% 
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
     
   } else {
-    any_cohort <- cohorts %>% dplyr::select(-.data$cohort_definition_id) %>%
+    any_cohort <- cohorts %>% dplyr::select(-cohort_definition_id) %>%
       dplyr::group_by(subject_id) %>% dbplyr::window_order(.data$cohort_start_date) %>%
       dplyr::mutate(seq = row_number()) %>% distinct() %>% 
-      dplyr::filter(.data$seq == 1) %>% ungroup() %>%
+      dplyr::filter(seq == 1) %>% ungroup() %>%
       dplyr::mutate(cohort_definition_id = cohort_id) %>% 
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date)
   }
@@ -384,26 +384,26 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
   appendPermanent(any_cohort, name = tableName,  schema = results_database_schema)
 }
 
-do_overlap_vacc <- function(cdm, base_id, new_id, tableName) {
+do_overlap_vacc <- function(base_id, new_id, tableName) {
   vaccinated_cohort <- cdm[[tableName]] %>%
-    dplyr::filter(.data$cohort_definition_id == base_id) %>% 
+    dplyr::filter(cohort_definition_id == base_id) %>% 
     left_join(cdm[[VaccCohortsName]] %>%
-                dplyr::filter(.data$cohort_definition_id == 1) %>% 
+                dplyr::filter(cohort_definition_id == 1) %>% 
                 dplyr::select(subject_id, "vacc_date" = "cohort_start_date"),
               by = "subject_id") %>%
-    dplyr::filter(.data$cohort_start_date > .data$vacc_date) %>% 
-    dplyr::filter(!(is.na(.data$vacc_date))) %>%
+    dplyr::filter(cohort_start_date > vacc_date) %>% 
+    dplyr::filter(!(is.na(vacc_date))) %>%
     dplyr::mutate(cohort_definition_id = new_id) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
   nonvaccinated_cohort <- cdm[[tableName]] %>%
-    dplyr::filter(.data$cohort_definition_id == base_id) %>% 
+    dplyr::filter(cohort_definition_id == base_id) %>% 
     left_join(cdm[[VaccCohortsName]] %>%
                 dplyr::filter(cohort_definition_id == 2) %>%
                 dplyr::select(subject_id, "vacc_end_date" = "cohort_end_date"),
               by = "subject_id") %>%
-    dplyr::filter(.data$vacc_end_date > .data$cohort_start_date) %>%
-    dplyr::mutate(cohort_end_date = pmin(.data$cohort_end_date,.data$vacc_end_date)) %>%
+    dplyr::filter(vacc_end_date > cohort_start_date) %>%
+    dplyr::mutate(cohort_end_date = pmin(cohort_end_date,vacc_end_date)) %>%
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
@@ -414,68 +414,81 @@ do_overlap_vacc <- function(cdm, base_id, new_id, tableName) {
                   schema = results_database_schema)
   }
 
-do_strata_calendar <- function(cdm, base_id, new_id) {
-  cohort_delta <- cdm[["studyathon_final_cohorts"]] %>%
+do_strata_calendar <- function(base_id, new_id, tableName) {
+  cohort_delta <- cdm[[tableName]] %>%
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date < omicron_start_date) %>%
     mutate(cohort_definition_id = new_id) %>% compute()
-  cohort_omicron <- cdm[["studyathon_final_cohorts"]] %>%
+  cohort_omicron <- cdm[[tableName]] %>%
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date >= omicron_start_date) %>%
     mutate(cohort_definition_id = new_id+1) %>% compute()
-  appendPermanent(cohort_delta, name = "studyathon_final_cohorts",
+  appendPermanent(cohort_delta, name = tableName,
                   schema = results_database_schema)
-  appendPermanent(cohort_omicron, name = "studyathon_final_cohorts",
+  appendPermanent(cohort_omicron, name = tableName,
                   schema = results_database_schema)
   
   names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(cohort_definition_id = c(new_id,new_id+1), 
-                                             cohort_name =c(paste0("Cohort ",i," Delta" ),
-                                                           paste0("Cohort ",i," Omicron" ))))
+                               dplyr::tibble(table_name = tableName,
+                                             cohort_definition_id = c(new_id,new_id+1), 
+                                             cohort_name =c(paste0("Cohort ",base_id," in ", tableName, "  Delta" ),
+                                                           paste0("Cohort ",base_id," in ", tableName, "  Omicron" ))))
   
 }
 
 do_sex_strata <- function(cohort_id, new_id, tableName) {
-  sex_strata <- cdm[[tableName]] %>% dplyr::filter(.data$cohort_definition_id == cohort_id)
+  sex_strata <- cdm[[tableName]] %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
+    compute()
   females <- sex_strata %>% PatientProfiles::addSex(cdm) %>% dplyr::filter(sex == "Female") %>% 
-    dplyr::mutate(cohort_definition_id = new_id) %>% compute()
+    dplyr::mutate(cohort_definition_id = new_id) %>% 
+    dplyr::select(-sex) %>% compute()
   males <- sex_strata %>% PatientProfiles::addSex(cdm) %>% 
-    dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>%
+    dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>% 
+    dplyr::select(-sex) %>% 
     compute()
   appendPermanent(females, name = tableName,  schema = results_database_schema)
   appendPermanent(males, name = tableName,  schema = results_database_schema)
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = tableName,
                                              cohort_definition_id = c(new_id,new_id+1), 
-                                             cohort_name =c(paste0("Cohort ",i," females" ),paste0("Cohort ",i," males" ))))
+                                             cohort_name =c(paste0("Cohort ",cohort_id," in ",tableName," females" ),paste0("Cohort ",cohort_id," in ",tableName," males" ))))
 }
 
 do_age_strata <- function(cohort_id, new_id, tableName) {
-  age_strata <- cdm[[tableName]] %>% dplyr::filter(.data$cohort_definition_id == cohort_id)
+  age_strata <- cdm[[tableName]] %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
+    compute()
   age1 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(0:2)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id) %>% compute()
+    dplyr::filter(age %in% c(0:2)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id) %>% 
+    dplyr::select(-age) %>% compute()
   age2 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(3:5)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+1) %>% compute()
+    dplyr::filter(age %in% c(3:5)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+1) %>%  
+    dplyr::select(-age) %>% compute()
   age3 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(6:9)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+2) %>% compute()
+    dplyr::filter(age %in% c(6:9)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+2) %>%  
+    dplyr::select(-age) %>% compute()
   age4 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(10:13)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+3) %>% compute()
+    dplyr::filter(age %in% c(10:13)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+3) %>%  
+    dplyr::select(-age) %>% compute()
   age5 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(14:17)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+4) %>% compute()
+    dplyr::filter(age %in% c(14:17)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+4) %>%  
+    dplyr::select(-age) %>% compute()
   age6 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(18:40)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+5) %>% compute()
+    dplyr::filter(age %in% c(18:40)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+5) %>%  
+    dplyr::select(-age) %>% compute()
   age7 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(41:64)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+6) %>% compute()
+    dplyr::filter(age %in% c(41:64)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+6) %>%  
+    dplyr::select(-age) %>% compute()
   age8 <- age_strata %>% PatientProfiles::addAge(cdm) %>% 
-    dplyr::filter(.data$age %in% c(65:120)) %>% 
-    dplyr::mutate(cohort_definition_id = new_id+7) %>% compute()
+    dplyr::filter(age %in% c(65:120)) %>% 
+    dplyr::mutate(cohort_definition_id = new_id+7) %>%  
+    dplyr::select(-age) %>% compute()
   
   appendPermanent(age1, name = tableName,  schema = results_database_schema)
   appendPermanent(age2, name = tableName,  schema = results_database_schema)
@@ -489,13 +502,13 @@ do_age_strata <- function(cohort_id, new_id, tableName) {
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = tableName,
                                              cohort_definition_id = c(new_id : new_id+7), 
-                                             cohort_name =c(paste0("Cohort ",i," age (0,2)" ),
-                                                            paste0("Cohort ",i," age (3,5)" ),
-                                                            paste0("Cohort ",i," age (6,9)" ),
-                                                            paste0("Cohort ",i," age (10,13)" ),
-                                                            paste0("Cohort ",i," age (14,17)" ),
-                                                            paste0("Cohort ",i," age (18,40)" ),
-                                                            paste0("Cohort ",i," age (41,64)" ),
-                                                            paste0("Cohort ",i," age (65,120)" ))))
+                                             cohort_name =c(paste0("Cohort ",cohort_id," in ", tableName, " age (0,2)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (3,5)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (6,9)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (10,13)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (14,17)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (18,40)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (41,64)" ),
+                                                            paste0("Cohort ",cohort_id," in ", tableName, " age (65,120)" ))))
   
 }

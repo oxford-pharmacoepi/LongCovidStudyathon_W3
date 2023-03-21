@@ -45,12 +45,12 @@ if (readInitialCohorts){
   info(logger, 'GOT INITIAL COHORTS')
 } else {
   info(logger, 'INITIAL COHORTS ALREADY INSTANTIATED')
-  initialCohortSet <- CDMConnector::readCohortSet(
+  Initial_cohorts <- CDMConnector::readCohortSet(
     here::here("1_InitialCohorts", "Jsons")) %>%
     dplyr::mutate(cohort_name = substr(cohort_name, 5, nchar(cohort_name)))
   cdm <- cdmFromCon(
     db, cdm_database_schema, writeSchema = results_database_schema,
-    cohortTables = "studyathon_lcpasc")
+    cohortTables = InitialCohortsName)
   info(logger, 'INITIAL COHORTS READ')
 }
 

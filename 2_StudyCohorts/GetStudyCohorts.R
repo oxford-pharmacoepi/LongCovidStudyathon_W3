@@ -12,6 +12,11 @@ observation_death <- cdm$observation_period %>%
   mutate(death = ifelse(!(is.na(death_date)), 1,0)) %>%
   compute()
 
+# Output folder for Attrition
+output_at <- file.path(tempDir,"Attrition")
+if (!file.exists(output_at)){
+  dir.create(output_at, recursive = TRUE)}
+
 # ---------------------------------------------------------------------
 # BASE COHORTS
 
@@ -121,12 +126,12 @@ appendPermanent(flu, name = BaseCohortsName,
 
 write.csv(
   attrition,
-  file = file.path(tempDir, "attrition_studies.csv"),
+  file = here::here(output_at, "attrition_base.csv"),
   row.names = FALSE
 )
 write.csv(
   attrition_censor,
-  file = file.path(tempDir, "attrition_censoring_studies.csv"),
+  file = here::here(output_at, "attrition_base_censoring.csv"),
   row.names = FALSE
 )
 
@@ -143,6 +148,8 @@ info(logger, '-- Getting outcome cohorts')
 # Long covid symptoms
 create_outcome(cdm, window = c(5:29), filter_start = FALSE, first_event = FALSE, 
                new_ids = c(1:25), tableName = LongCovidCohortsName)
+# This is slow! #K
+
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
@@ -450,6 +457,7 @@ info(logger, '-- Getting overlapping cohorts')
 
 # LC any symptom + Infection / Reinfection / Test negative / Influenza
 do_overlap_LCany(cdm, c(1:4), c(5:29), c(1:4))
+# This is slow! #K
 
 # LC code + Infection
 do_overlap(cdm, 1, 27, 5, washout = FALSE, tableName = LongCovidCohortsName,
@@ -514,6 +522,30 @@ do_sex_strata(10, 31, OverlapCohortsCName)
 do_sex_strata(11, 33, OverlapCohortsCName)
 do_sex_strata(12, 35, OverlapCohortsCName)
 
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = BaseCohortsName,
+                                           cohort_definition_id = c(5:12), 
+                                           cohort_name =c("Inf females", "Inf males",
+                                                          "Reinf females", "Reinf males",
+                                                          "Neg females", "Neg males",
+                                                          "Flu females", "Flu males")))
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsCName,
+                                           cohort_definition_id = c(13:36), 
+                                           cohort_name =c("Inf + LC Any + females", "Inf + LC Any + males",
+                                                          "Reinf + LC Any + females", "Reinf + LC Any + males",
+                                                          "Neg + LC Any + females", "Neg + LC Any + males",
+                                                          "Flu + LC Any + females", "Flu + LC Any + males",
+                                                          "Inf + LC Code + females", "Inf + LC Code + males",
+                                                          "Reinf + LC Code + females", "Reinf + LC Code + males",
+                                                          "Neg + LC Code + females", "Neg + LC Code + males",
+                                                          "Flu + LC Code + females", "Flu + LC Code + males",
+                                                          "Inf + PASC Any + females", "Inf + PASC Any + males",
+                                                          "Reinf + PASC Any + females", "Reinf + PASC Any + males",
+                                                          "Neg + PASC Any + females", "Neg + PASC Any + males",
+                                                          "Flu + PASC Any + females", "Flu + PASC Any + males")))
+
+
 # Characterisation cohorts stratified by age
 do_age_strata(1, 13, BaseCohortsName)
 do_age_strata(2, 21, BaseCohortsName)
@@ -531,6 +563,80 @@ do_age_strata(9, 101, OverlapCohortsCName)
 do_age_strata(10, 109, OverlapCohortsCName)
 do_age_strata(11, 117, OverlapCohortsCName)
 do_age_strata(12, 125, OverlapCohortsCName)
+
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = BaseCohortsName,
+                                           cohort_definition_id = c(13:44), 
+                                           cohort_name =c("Inf age (0,2)" , "Inf age (3,5)", 
+                                                          "Inf age (6,9)", "Inf age (10,13)",
+                                                          "Inf age (14,17)", "Inf age (18,40)",
+                                                          "Inf age (41,64)", "Inf age (65,120)",
+                                                          "Reinf age (0,2)" , "Reinf age (3,5)", 
+                                                          "Reinf age (6,9)", "Reinf age (10,13)",
+                                                          "Reinf age (14,17)", "Reinf age (18,40)",
+                                                          "Reinf age (41,64)", "Reinf age (65,120)",
+                                                          "Neg age (0,2)" , "Neg age (3,5)", 
+                                                          "Neg age (6,9)", "Neg age (10,13)",
+                                                          "Neg age (14,17)", "Neg age (18,40)",
+                                                          "Neg age (41,64)", "Neg age (65,120)",
+                                                          "Flu age (0,2)" , "Flu age (3,5)", 
+                                                          "Flu age (6,9)", "Flu age (10,13)",
+                                                          "Flu age (14,17)", "Flu age (18,40)",
+                                                          "Flu age (41,64)", "Flu age (65,120)")))
+
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsCName,
+                                           cohort_definition_id = c(37:132), 
+                                           cohort_name =c("Inf + LC any + age (0,2)" , "Inf + LC any + age (3,5)", 
+                                                          "Inf + LC any + age (6,9)", "Inf + LC any + age (10,13)",
+                                                          "Inf + LC any + age (14,17)", "Inf + LC any + age (18,40)",
+                                                          "Inf + LC any + age (41,64)", "Inf + LC any + age (65,120)",
+                                                          "Reinf + LC any + age (0,2)" , "Reinf + LC any + age (3,5)", 
+                                                          "Reinf + LC any + age (6,9)", "Reinf + LC any + age (10,13)",
+                                                          "Reinf + LC any + age (14,17)", "Reinf + LC any + age (18,40)",
+                                                          "Reinf + LC any + age (41,64)", "Reinf + LC any + age (65,120)",
+                                                          "Neg + LC any + age (0,2)" , "Neg + LC any + age (3,5)", 
+                                                          "Neg + LC any + age (6,9)", "Neg + LC any + age (10,13)",
+                                                          "Neg + LC any + age (14,17)", "Neg + LC any + age (18,40)",
+                                                          "Neg + LC any + age (41,64)", "Neg + LC any + age (65,120)",
+                                                          "Flu + LC any + age (0,2)" , "Flu + LC any + age (3,5)", 
+                                                          "Flu + LC any + age (6,9)", "Flu + LC any + age (10,13)",
+                                                          "Flu + LC any + age (14,17)", "Flu + LC any + age (18,40)",
+                                                          "Flu + LC any + age (41,64)", "Flu + LC any + age (65,120)",
+                                                          "Inf + LC code + age (0,2)" , "Inf + LC code + age (3,5)", 
+                                                          "Inf + LC code + age (6,9)", "Inf + LC code + age (10,13)",
+                                                          "Inf + LC code + age (14,17)", "Inf + LC code + age (18,40)",
+                                                          "Inf + LC code + age (41,64)", "Inf + LC code + age (65,120)",
+                                                          "Reinf + LC code + age (0,2)" , "Reinf + LC code + age (3,5)", 
+                                                          "Reinf + LC code + age (6,9)", "Reinf + LC code + age (10,13)",
+                                                          "Reinf + LC code + age (14,17)", "Reinf + LC code + age (18,40)",
+                                                          "Reinf + LC code + age (41,64)", "Reinf + LC code + age (65,120)",
+                                                          "Neg + LC code + age (0,2)" , "Neg + LC code + age (3,5)", 
+                                                          "Neg + LC code + age (6,9)", "Neg + LC code + age (10,13)",
+                                                          "Neg + LC code + age (14,17)", "Neg + LC code + age (18,40)",
+                                                          "Neg + LC code + age (41,64)", "Neg + LC code + age (65,120)",
+                                                          "Flu + LC code + age (0,2)" , "Flu + LC code + age (3,5)", 
+                                                          "Flu + LC code + age (6,9)", "Flu + LC code + age (10,13)",
+                                                          "Flu + LC code + age (14,17)", "Flu + LC code + age (18,40)",
+                                                          "Flu + LC code + age (41,64)", "Flu + LC code + age (65,120)",
+                                                          "Inf + PASC any + age (0,2)" , "Inf + PASC any + age (3,5)", 
+                                                          "Inf + PASC any + age (6,9)", "Inf + PASC any + age (10,13)",
+                                                          "Inf + PASC any + age (14,17)", "Inf + PASC any + age (18,40)",
+                                                          "Inf + PASC any + age (41,64)", "Inf + PASC any + age (65,120)",
+                                                          "Reinf + PASC any + age (0,2)" , "Reinf + PASC any + age (3,5)", 
+                                                          "Reinf + PASC any + age (6,9)", "Reinf + PASC any + age (10,13)",
+                                                          "Reinf + PASC any + age (14,17)", "Reinf + PASC any + age (18,40)",
+                                                          "Reinf + PASC any + age (41,64)", "Reinf + PASC any + age (65,120)",
+                                                          "Neg + PASC any + age (0,2)" , "Neg + PASC any + age (3,5)", 
+                                                          "Neg + PASC any + age (6,9)", "Neg + PASC any + age (10,13)",
+                                                          "Neg + PASC any + age (14,17)", "Neg + PASC any + age (18,40)",
+                                                          "Neg + PASC any + age (41,64)", "Neg + PASC any + age (65,120)",
+                                                          "Flu + PASC any + age (0,2)" , "Flu + PASC any + age (3,5)", 
+                                                          "Flu + PASC any + age (6,9)", "Flu + PASC any + age (10,13)",
+                                                          "Flu + PASC any + age (14,17)", "Flu + PASC any + age (18,40)",
+                                                          "Flu + PASC any + age (41,64)", "Flu + PASC any + age (65,120)")))
+
+
 
 # Characterisation cohorts stratified by vaccination
 do_overlap_vacc(1, 45, BaseCohortsName)
@@ -551,7 +657,7 @@ do_overlap_vacc(11, 153, OverlapCohortsCName)
 do_overlap_vacc(12, 155, OverlapCohortsCName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(table_name = OverlapCohortsCName,
+                             dplyr::tibble(table_name = BaseCohortsName,
                                            cohort_definition_id = c(45:52), 
                                            cohort_name = c("Inf + vacc","Inf + not vacc",
                                                            "Reinf + vacc","Reinf + not vacc",
@@ -603,10 +709,34 @@ do_strata_calendar(10, 175, OverlapCohortsCName)
 do_strata_calendar(11, 177, OverlapCohortsCName)
 do_strata_calendar(12, 179, OverlapCohortsCName)
 
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = BaseCohortsName,
+                                           cohort_definition_id = c(53:60), 
+                                           cohort_name =c("Inf Delta", "Inf Omicron",
+                                                          "Reinf Delta", "Reinf Omicron",
+                                                          "Neg Delta", "Neg Omicron",
+                                                          "Flu Delta", "Flu Omicron")))
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsCName,
+                                           cohort_definition_id = c(157:180), 
+                                           cohort_name =c("Inf + LC Any + Delta", "Inf + LC Any + Omicron",
+                                                          "Reinf + LC Any + Delta", "Reinf + LC Any + Omicron",
+                                                          "Neg + LC Any + Delta", "Neg + LC Any + Omicron",
+                                                          "Flu + LC Any + Delta", "Flu + LC Any + Omicron",
+                                                          "Inf + LC Code + Delta", "Inf + LC Code + Omicron",
+                                                          "Reinf + LC Code + Delta", "Reinf + LC Code + Omicron",
+                                                          "Neg + LC Code + Delta", "Neg + LC Code + Omicron",
+                                                          "Flu + LC Code + Delta", "Flu + LC Code + Omicron",
+                                                          "Inf + PASC Any + Delta", "Inf + PASC Any + Omicron",
+                                                          "Reinf + PASC Any + Delta", "Reinf + PASC Any + Omicron",
+                                                          "Neg + PASC Any + Delta", "Neg + PASC Any + Omicron",
+                                                          "Flu + PASC Any + Delta", "Flu + PASC Any + Omicron")))
+
 # ---------------------------------------------------------------------
 # OVERLAPPING COHORTS INCIDENCE
 # Overlapping cohorts of single symptoms / events / medical conditions with base cohorts
 
+# This is slow! #K
 base_ids <- c(1:4)
 
 outcome_ids <- c(1:25)
@@ -664,13 +794,22 @@ cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema
                                    OverlapCohortsCName,OverlapCohortsIPName))
 
 # -------------------------------------------------------------------
-# TREATMENT PATTERNS and HEALTHCARE UTILISATION COHORTS
+# TREATMENT PATTERNS and HEALTHCARE UTILISATION COHORTS, TRAJ COHORT
 
 if(doTreatmentPatterns) {
 create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
                new_ids = c(61:92), tableName = BaseCohortsName)
 create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
                  new_ids = c(181:212), tableName = OverlapCohortsCName)  
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = BaseCohortsName,
+                                           cohort_definition_id = c(61:92),
+                                           cohort_name = Initial_cohorts$cohort_name[68:99]))
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsCName,
+                                           cohort_definition_id = c(181:212),
+                                           cohort_name = Initial_cohorts$cohort_name[68:99]))
+
 }
 
 if(doCharacterisation || doClusteringLCA) {
@@ -683,16 +822,63 @@ if(doCharacterisation || doClusteringLCA) {
                                                                by = c("subject_id")) %>%
   dplyr::mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date, death_date))) %>% 
   compute()
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = HUCohortsName,
+                                             cohort_definition_id = c(1:4),
+                                             cohort_name = HU_cohorts$cohort_name[1:4]))
+  
+}
+
+if(doTrajectories) {
+  # Save the "any LC symptom + infection" or "infection + LC code" cohort in a table which can be read by Trajectories package
+  traj_table <- cdm[[OverlapCohortsCName]] %>%
+    dplyr::filter(cohort_definition_id %in% c(1,5)) %>%
+    dplyr::mutate(cohort_definition_id = 1) %>%
+    compute()
+  computeQuery(traj_table, name = TrajCohortsName,  
+               temporary = FALSE,
+               schema = results_database_schema, overwrite = TRUE)
+  
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = TrajCohortsName,
+                                             cohort_definition_id = c(1),
+                                             cohort_name = "LC any + code Trajectories"))
 }
 
 # --------------------------------------------------------------------
 # Print counts of all cohorts (if >5) 
 
+if((doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
+
 finalCounts <- tibble::tibble(cohort_name = "start", n = 0)
 
 for(name in CohortNames) {
   if(name %in% names(cdm)) {
-    finalCounts <- cdm[[name]] %>% 
+    finalCounts <- finalCounts %>%
+      dplyr::union(cdm[[name]] %>% 
       dplyr::group_by(cohort_definition_id) %>% 
       tally() %>% 
       collect() %>% 
@@ -701,7 +887,7 @@ for(name in CohortNames) {
       dplyr::mutate(n = as.numeric(n)) %>% 
       dplyr::mutate(n = if_else(is.na(n), 0, n)) %>%
       dplyr::mutate(n = ifelse(n <= 5, NA, n)) %>% 
-      dplyr::select(cohort_name, n)
+      dplyr::select(cohort_name, n))
   }
 }
 

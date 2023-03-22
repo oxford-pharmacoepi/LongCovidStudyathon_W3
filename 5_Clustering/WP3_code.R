@@ -1,8 +1,29 @@
 # Clustering 
 
-names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = names_in_cdm)
+if((doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
 
 # Output folders for WP3
 output_clustering <- file.path(tempDir,"Clustering")
@@ -312,7 +333,7 @@ HU_summary <- cohort_LC %>%
   dplyr::mutate(time_trach = !!CDMConnector::datediff("last_trach", "cohort_start_date")) %>%
   dplyr::mutate(time_ecmo = !!CDMConnector::datediff("last_ecmo", "cohort_start_date")) %>%
   dplyr::select(dplyr::starts_with(c("number","time"))) %>%
-  dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+  dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
   dplyr::arrange(cohort_definition_id) %>%
   compute()
 
@@ -339,7 +360,7 @@ if(all(c("number_visit", "last_hosp") %in% colnames(cohort_LC))) {
     dplyr::group_by(cohort_definition_id) %>%
     mutate(time_visit = !!CDMConnector::datediff("last_hosp", "cohort_start_date")) %>%
     dplyr::select(dplyr::starts_with(c("number","time"))) %>%
-    dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+    dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
     dplyr::arrange(cohort_definition_id) %>%
     compute()
   # K is it a cbind?

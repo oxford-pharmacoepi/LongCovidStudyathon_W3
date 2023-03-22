@@ -5,9 +5,30 @@
 # repeated events no
 # look back 0
 
-names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = names_in_cdm)
+if((doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
 
 # Output folder for WP1
 output_ip <- file.path(tempDir,"IP")
@@ -101,7 +122,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
     cdm =  cdm,
     strataTable = tableBase,
-    strataId = vacc_id,
+    strataCohortId = vacc_id,
     startDate = date_to_consider,
     endDate = date_to_end,
   )

@@ -4,10 +4,30 @@
 # get functions used throughout this script
 source(here::here("4_Characterisation","functions_characterisation.R"))
 
-names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = names_in_cdm)
-
+if((doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
 if(doCharacterisation) {
   # Output folders for WP2
   output_lsc <- file.path(tempDir,"Large-scale Characterisation")
@@ -21,7 +41,6 @@ if(doDrugUtilisation) {
   if (!file.exists(output_du)){
     dir.create(output_du, recursive = TRUE)}
 }
-
 
 if(doTreatmentPatterns) {
   output_tp <- file.path(tempDir,"Treatment Patterns")

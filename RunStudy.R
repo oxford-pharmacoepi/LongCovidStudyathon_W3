@@ -31,7 +31,8 @@ VaccCohortsName <- paste0(table_stem,"_vacccohorts")
 # Create vector with all names
 CohortNames <- c(InitialCohortsName, BaseCohortsName, LongCovidCohortsName,
                  PascCohortsName, MedCondCohortsName, OverlapCohortsCName,
-                 OverlapCohortsIPName, HUCohortsName, TrajCohortsName)
+                 OverlapCohortsIPName, HUCohortsName, TrajCohortsName,
+                 VaccCohortsName)
 
 # get functions used throughout this study
 source(here::here("functions.R"))

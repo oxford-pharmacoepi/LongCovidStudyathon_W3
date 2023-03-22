@@ -7,17 +7,30 @@ output_traj <- file.path(tempDir,"Trajectories")
 if (!file.exists(output_traj)){
   dir.create(output_traj, recursive = TRUE)}
 
-# Save the "any LC symptom + infection" or "infection + LC code" cohort in a table which can be read by Trajectories package
-traj_table <- cdm[[OverlapCohortsCName]] %>%
-  dplyr::filter(cohort_definition_id %in% c(1,5)) %>%
-  dplyr::mutate(cohort_definition_id = 1)
-computeQuery(traj_table, name = TrajCohortsName,  
-             temporary = FALSE,
-             schema = results_database_schema, overwrite = TRUE)
-
-names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = names_in_cdm)
+if((doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
 
 # Setting local system & database parameters - CHANGE ACCORDING TO YOUR SYSTEM & DATABASE:
 trajectoryLocalArgs <- Trajectories::createTrajectoryLocalArgs(oracleTempSchema="",

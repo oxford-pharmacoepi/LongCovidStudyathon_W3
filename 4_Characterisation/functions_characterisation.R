@@ -119,7 +119,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
     dplyr::mutate(time_trach = !!CDMConnector::datediff("last_trach", "cohort_start_date")) %>%
     dplyr::mutate(time_ecmo = !!CDMConnector::datediff("last_ecmo", "cohort_start_date")) %>%
     dplyr::select(dplyr::starts_with(c("number","time"))) %>%
-    dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+    dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
     dplyr::arrange(cohort_definition_id) %>%
     compute()
   
@@ -151,7 +151,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
       dplyr::group_by(cohort_definition_id) %>%
       mutate(time_visit = !!CDMConnector::datediff("last_hosp", "cohort_start_date")) %>%
       dplyr::select(dplyr::starts_with(c("number","time"))) %>%
-      dplyr::summarise(across(everything(), list(mean = mean, var = var, sum = sum))) %>%
+      dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
       dplyr::arrange(cohort_definition_id) %>%
       compute()
     # K is it a cbind?

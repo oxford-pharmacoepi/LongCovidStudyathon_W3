@@ -6,7 +6,7 @@
   "addConditions": [true],
   "addObservations": [false],
   "addProcedures": [false],
-  "addDrugExposures": [true],
+  "addDrugExposures": [false],
   "addDrugEras": [false],
   "addBirths": [false],
   "addDeaths": [true],

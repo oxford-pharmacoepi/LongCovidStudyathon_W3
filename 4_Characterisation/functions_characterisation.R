@@ -6,7 +6,7 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
     addOverlap(cdm, VaccCohortsName, 3, "first_dose") %>% 
     addOverlap(cdm, VaccCohortsName, 4, "second_dose") %>% 
     addOverlap(cdm, VaccCohortsName, 5, "third_dose") %>% 
-    addEvent(cdm, VaccCohortsName, 1, c(Na,0), "last_dose", order = "last") %>% 
+    addEvent(cdm, VaccCohortsName, 1, c(NA,0), "last_dose", order = "last") %>% 
     compute()
   
   cohorts_interest <- cohorts_interest %>% 
@@ -106,14 +106,14 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
     addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 3), c(-365,-1), "number_trach") %>%
     addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 4), c(-365,-1), "number_ecmo") %>%
     addNumberVisit(cdm, 9202, c(-365,-1)) %>% 
-    addEvent(cdm, "visit_occurrence", 9202, c(-365,-1), "last_GP", eventDate = "visit_start_date", order = "last") %>%
+    addVisit(cdm, "visit_occurrence", 9202, c(-365,-1), "last_gp", eventDate = "visit_start_date", order = "last") %>%
     compute()
   
   HU_summary <- cohorts_interest %>%
-    dplyr::rename("number_GP" = "number_visit") %>%
+    dplyr::rename("number_gp" = "number_visit") %>%
     dplyr::ungroup() %>%
     dplyr::group_by(cohort_definition_id) %>%
-    dplyr::mutate(time_GP = !!CDMConnector::datediff("last_GP", "cohort_start_date")) %>%
+    dplyr::mutate(time_GP = !!CDMConnector::datediff("last_gp", "cohort_start_date")) %>%
     dplyr::mutate(time_icu = !!CDMConnector::datediff("last_icu", "cohort_start_date")) %>%
     dplyr::mutate(time_vent = !!CDMConnector::datediff("last_vent", "cohort_start_date")) %>%
     dplyr::mutate(time_trach = !!CDMConnector::datediff("last_trach", "cohort_start_date")) %>%
@@ -141,10 +141,10 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
   
   cohorts_interest <- cohorts_interest %>% dplyr::select(-dplyr::contains(c("time", "number", "last"))) %>%
     addNumberVisit(cdm, ip.codes.w.desc, c(-365,-1)) %>% 
-    addEvent(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
+    addVisit(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
     compute()
 
-  if(all(c("number_visit", "last_hosp") %in% colnames(cohorts_interest))) {
+  if(sum(cohorts_interest %>% dplyr::select(number_visit) %>% dplyr::pull()) == 0) {
     HU_hosp_summary <- cohorts_interest %>%
       dplyr::rename("number_hosp" = "number_visit") %>%
       dplyr::ungroup() %>%
@@ -155,7 +155,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
       dplyr::arrange(cohort_definition_id) %>%
       compute()
     # K is it a cbind?
-    HU_summary_final <- cbind(HU_summary,HU_hosp_summary)
+    HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cohort_definition_id")
   } else {
     HU_summary_final <- HU_summary
   }
@@ -211,7 +211,8 @@ do_tp <- function(cohort_base_id, tp_ids, tableName) {
   TreatmentPatterns::constructPathways(
     dataSettings = dataSettings,
     pathwaySettings = pathwaySettings,
-    saveSettings = saveSettings)
+    saveSettings = saveSettings,
+    tableName = tableName)
   
   TreatmentPatterns::generateOutput(saveSettings = saveSettings)
 }

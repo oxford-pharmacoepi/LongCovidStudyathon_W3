@@ -1,4 +1,8 @@
 # Run trajectories part
+
+connection <- DatabaseConnector::connect(connectionDetails)
+on.exit(DatabaseConnector::disconnect(connection)) #Close db connection on error or exit
+
 names_in_cdm <- CohortNames[CohortNames %in% names(cdm)]
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = names_in_cdm)

@@ -4,6 +4,7 @@
 # get functions used throughout this script
 source(here::here("4_Characterisation","functions_characterisation.R"))
 
+
 if((doCharacterisation || doClustering) && doTrajectories) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
@@ -28,6 +29,7 @@ if((doCharacterisation || doClustering) && doTrajectories) {
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName))
 }
+
 if(doCharacterisation) {
   # Output folders for WP2
   output_lsc <- file.path(tempDir,"Large-scale Characterisation")
@@ -42,14 +44,15 @@ if(doDrugUtilisation) {
     dir.create(output_du, recursive = TRUE)}
 }
 
+
 if(doTreatmentPatterns) {
   output_tp <- file.path(tempDir,"Treatment Patterns")
   if (!file.exists(output_tp)){
     dir.create(output_tp, recursive = TRUE)}
   
-  output_tp_db <- file.path(tempDir, db.name)
-  if (!file.exists(output_tp_db)){
-    dir.create(output_tp_db, recursive = TRUE)}
+  output_tp_settings <- file.path(tempDir, "Treatment Patterns", "settings")
+  if (!file.exists(output_tp_settings)){
+    dir.create(output_tp_settings, recursive = TRUE)}
 }
 
 # CHANGE THIS AGAIN
@@ -88,18 +91,22 @@ if(doDrugUtilisation) {
   
   # Make code quicker by disregarding uninteresting drug data
   cdm[["drug_exposure"]] <- cdm[["drug_exposure"]] %>%
-    dplyr::filter(lubridate::year(.data$visit_start_date) >= 2016) %>%
+    dplyr::filter(lubridate::year(.data$drug_exposure_start_date) >= 2016) %>%
     dplyr::compute()
   
   do_du(c(1:4), "all_base", BaseCohortsName)
   do_du(c(1:12), "all_any", OverlapCohortsCName)
 }
-  
+
 if(doTreatmentPatterns) {
   info(logger, '-- Performing Treatment Patterns calculations')
   # Treatment Patterns
-  do_tp(c(1:4), c(61:92), BaseCohortsName)
-  do_tp(c(1:12), c(181:212), OverlapCohortsCName)
+  for(i in c(1:4)) {
+    do_tp(i, c(61:92), BaseCohortsName)
+  }
+  for(i in c(1:12)) {
+    do_tp(i, c(181:212), OverlapCohortsCName)
+  }
 }
 
 
@@ -109,33 +116,37 @@ if(doCharacterisation) {
   info(logger, '-- Performing Large-scale characterisation for all the cohorts of interest, sex strata')
   info(logger, '--- Looking at baseline characterisation')
   # Large scale characterisation
-  do_lsc(c(5:10), "sex_base", BaseCohortsName)
+  do_lsc(c(5:12), "sex_base", BaseCohortsName)
   do_lsc(c(13:36), "sex_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at vaccination outcomes for characterisation')
   # Vaccination
-  do_vaccination_characterisation(c(5:10), "sex_base", BaseCohortsName)
+  do_vaccination_characterisation(c(5:12), "sex_base", BaseCohortsName)
   do_vaccination_characterisation(c(13:36), "sex_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at healthcare utilisation outcomes for characterisation')
   # Healthcare Utilisation
   # sick leave missing
-  do_hu(c(5:10), "sex_base", BaseCohortsName)
+  do_hu(c(5:12), "sex_base", BaseCohortsName)
   do_hu(c(13:36), "sex_any", OverlapCohortsCName)
-  }
+}
 
 if(doDrugUtilisation) {
   # DRUG UTILISATION SEX STRATA
   info(logger, '--- Looking at drug utilisation')
-  do_du(c(5:10), "sex_base", BaseCohortsName)
+  do_du(c(5:12), "sex_base", BaseCohortsName)
   do_du(c(13:36), "sex_any", OverlapCohortsCName)
 }
 
 if(doTreatmentPatterns) {
   info(logger, '-- Performing Treatment Patterns calculations')
   # Treatment Patterns
-  do_tp(c(5:10), c(61:92), BaseCohortsName)
-  do_tp(c(13:36), c(181:212), OverlapCohortsCName)
+  for(i in c(5:12)) {
+    do_tp(i, c(61:92), BaseCohortsName)
+  }
+  for(i in c(13:36)) {
+    do_tp(i, c(181:212), OverlapCohortsCName)
+  }
 }
 
 # -------------------------------------------------------------------
@@ -169,8 +180,12 @@ if(doDrugUtilisation) {
 if(doTreatmentPatterns) {
   info(logger, '-- Performing Treatment Patterns calculations')
   # Treatment Patterns
-  do_tp(c(13:44), c(61:92), BaseCohortsName)
-  do_tp(c(37:132), c(181:212), OverlapCohortsCName)
+  for(i in c(13:52)) {
+    do_tp(i, c(61:92), BaseCohortsName)
+  }
+  for(i in c(37:132)) {
+    do_tp(i, c(181:212), OverlapCohortsCName)
+  }
 }
 
 # -------------------------------------------------------------------
@@ -205,8 +220,12 @@ if(doDrugUtilisation) {
 if(doTreatmentPatterns) {
   info(logger, '-- Performing Treatment Patterns calculations')
   # Treatment Patterns
-  do_tp(c(53:60), c(61:92), BaseCohortsName)
-  do_tp(c(157:180), c(181:212), OverlapCohortsCName)
+  for(i in c(53:60)) {
+    do_tp(i, c(61:92), BaseCohortsName)
+  }
+  for(i in c(157:180)) {
+    do_tp(i, c(181:212), OverlapCohortsCName)
+  }
 }
 
 # -------------------------------------------------------------------
@@ -240,9 +259,12 @@ if(vaccine_data) {
   if(doTreatmentPatterns) {
     info(logger, '-- Performing Treatment Patterns calculations')
     # Treatment Patterns
-    do_tp(c(45:52), c(61:92), BaseCohortsName)
-    do_tp(c(133:156), c(181:212), OverlapCohortsCName)
+    for(i in c(45:52)) {
+      do_tp(i, c(61:92), BaseCohortsName)
+    }
+    for(i in c(133:156)) {
+      do_tp(i, c(181:212), OverlapCohortsCName)
+    }
   }
   
 }
-

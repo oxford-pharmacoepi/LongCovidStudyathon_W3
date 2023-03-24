@@ -249,13 +249,67 @@ addEvent <- function(x, cdm, eventTableName, eventId = NULL, window = c(NA, NA),
   return(xx)
 }
 
+addVisit <- function(x, cdm, eventTableName, eventId = NULL, window = c(NA, NA), name = "event", eventDate = "cohort_start_date", eventAt = "cohort_start_date", order = "first", compute = TRUE) {
+  eventTable <- cdm[[eventTableName]]
+  if (!is.null(eventId)) {
+    eventTable <- eventTable %>% dplyr::filter(.data$visit_concept_id %in% .env$eventId)
+  }
+  if ("person_id" %in% colnames(eventTable)) {
+    eventTable <- eventTable %>% dplyr::rename("subject_id" = "person_id")
+  }
+  xx <- x %>%
+    dplyr::select(dplyr::all_of(c("subject_id", eventAt))) %>%
+    dplyr::distinct() %>%
+    dplyr::inner_join(
+      eventTable %>%
+        dplyr::select("subject_id", "event_date" = dplyr::all_of(eventDate)),
+      by = "subject_id"
+    ) %>%
+    dplyr::mutate(dif_time = !!CDMConnector::datediff(eventAt, "event_date"))
+  if (!is.na(window[1])) {
+    xx <- xx %>%
+      dplyr::filter(.data$dif_time >= !!window[1])
+  }
+  if (!is.na(window[2])) {
+    xx <- xx %>%
+      dplyr::filter(.data$dif_time <= !!window[2])
+  }
+  xx <- xx %>%
+    dplyr::group_by(dplyr::across(dplyr::all_of(c("subject_id", eventAt))))
+  if (order == "first") {
+    xx <- xx %>%
+      dplyr::summarise(
+        !!name := min(.data$event_date, na.rm = TRUE),
+        .groups = "drop"
+      )
+  } else if (order == "last") {
+    xx <- xx %>%
+      dplyr::summarise(
+        !!name := max(.data$event_date, na.rm = TRUE),
+        .groups = "drop"
+      )
+  } else if (order == "all") {
+    xx <- xx %>%
+      dbplyr::window_order(.data$event_date) %>%
+      dplyr::mutate(nam = dplyr::row_number()) %>%
+      dplyr::ungroup() %>%
+      dplyr::mutate(nam = paste0(.env$name, "_", .data$nam)) %>%
+      tidyr::pivot_wider(names_from = "nam", values_from = "event_date")
+  }
+  xx <- x %>% dplyr::left_join(xx, by = c("subject_id", eventAt))
+  if (isTRUE(compute)) {
+    xx <- xx %>% dplyr::compute()
+  }
+  return(xx)
+}
+
 addOverlap <- function(x, cdm, cohortName, id, name, window = c(NA, 0)) {
   xx <- x %>%
-    select("subject_id", "cohort_start_date") %>%
-    inner_join(
+    dplyr::select("subject_id", "cohort_start_date") %>%
+    dplyr::inner_join(
       cdm[[cohortName]] %>%
-        filter(cohort_definition_id %in% !!id) %>%
-        inner_join(
+        dplyr::filter(cohort_definition_id %in% !!id) %>%
+        dplyr::inner_join(
           dplyr::tibble(
             cohort_definition_id = id,
             overlap_name = name
@@ -263,7 +317,7 @@ addOverlap <- function(x, cdm, cohortName, id, name, window = c(NA, 0)) {
           by = "cohort_definition_id",
           copy = TRUE
         ) %>%
-        select(
+        dplyr::select(
           "subject_id", 
           "overlap_name", 
           "overlap_start" = "cohort_start_date", 
@@ -273,21 +327,26 @@ addOverlap <- function(x, cdm, cohortName, id, name, window = c(NA, 0)) {
     )
   if (!is.na(window[1])) {
     xx <- xx %>%
-      filter(overlap_end >= CDMConnector::dateadd("cohort_start_date", window[1]))
+      dplyr::filter(overlap_end >= CDMConnector::dateadd("cohort_start_date", window[1]))
   }
   if (!is.na(window[2])) {
     xx <- xx %>%
-      filter(overlap_start <= CDMConnector::dateadd("cohort_start_date", window[2]))
+      dplyr::filter(overlap_start <= CDMConnector::dateadd("cohort_start_date", window[2]))
   }
   xx <- xx %>%
-    select("subject_id", "cohort_start_date", "overlap_name") %>%
-    distinct() %>%
-    mutate(value = 1) %>%
-    pivot_wider(names_from = "overlap_name", values_from = "value", values_fill = 0) %>%
-    right_join(x, by = c("subject_id", "cohort_start_date"))
+    dplyr::select("subject_id", "cohort_start_date", "overlap_name") %>%
+    dplyr::distinct() %>%
+    dplyr::mutate(value = 1) %>%
+    tidyr::pivot_wider(names_from = "overlap_name", values_from = "value", values_fill = 0) %>%
+    dplyr::right_join(x, by = c("subject_id", "cohort_start_date"))
   for (nam in name) {
-    xx <- xx %>%
-      mutate(!!nam := if_else(is.na(.data[[nam]]), 0, .data[[nam]]))
+    if(nam %in% colnames(xx)) {
+      xx <- xx %>%
+        dplyr::mutate(!!nam := if_else(is.na(.data[[nam]]), 0, .data[[nam]]))
+    } else {
+      xx <- xx %>%
+        dplyr::mutate(!!nam := 0)
+    }
   }
   return(xx %>% compute())
 }

@@ -25,6 +25,8 @@ if((doCharacterisation || doClustering) && doTrajectories) {
                                      OverlapCohortsCName,OverlapCohortsIPName))
 }
 
+names_final_cohorts <- read.csv(file.path(tempDir,paste0(db.name,"_cohorts.csv")))
+
 # Output folders for WP3
 output_clustering <- file.path(tempDir,"Clustering")
 if (!file.exists(output_clustering)){
@@ -300,7 +302,7 @@ ip.codes.w.desc <- cdm$concept_ancestor %>%
 cohort_LC <- cdm[[OverlapCohortsIPName]] %>% 
   dplyr::filter(.data$cohort_definition_id %in% c(1:25))
 cohort_LC <- cohort_LC %>%
-  dplyr::full_join(
+  dplyr::union(
     cdm[[OverlapCohortsCName]] %>% 
       dplyr::filter(.data$cohort_definition_id == 5) %>%
       dplyr::mutate(cohort_definition_id = 27))
@@ -315,7 +317,7 @@ cohort_LC <- cohort_LC %>%
   addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 3), c(-365,-1), "number_trach") %>%
   addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 4), c(-365,-1), "number_ecmo") %>%
   addNumberVisit(cdm, 9202, c(-365,-1)) %>% 
-  addEvent(cdm, "visit_occurrence", 9202, c(-365,-1), "last_GP", eventDate = "visit_start_date", order = "last") %>%
+  addVisit(cdm, "visit_occurrence", 9202, c(-365,-1), "last_gp", eventDate = "visit_start_date", order = "last") %>%
   compute()
 
 cohort_LC <- cohort_LC %>% 
@@ -324,10 +326,10 @@ cohort_LC <- cohort_LC %>%
   compute()
 
 HU_summary <- cohort_LC %>%
-  dplyr::rename("number_GP" = "number_visit") %>%
+  dplyr::rename("number_gp" = "number_visit") %>%
   dplyr::ungroup() %>%
   dplyr::group_by(cohort_definition_id) %>%
-  dplyr::mutate(time_GP = !!CDMConnector::datediff("last_GP", "cohort_start_date")) %>%
+  dplyr::mutate(time_GP = !!CDMConnector::datediff("last_gp", "cohort_start_date")) %>%
   dplyr::mutate(time_icu = !!CDMConnector::datediff("last_icu", "cohort_start_date")) %>%
   dplyr::mutate(time_vent = !!CDMConnector::datediff("last_vent", "cohort_start_date")) %>%
   dplyr::mutate(time_trach = !!CDMConnector::datediff("last_trach", "cohort_start_date")) %>%
@@ -345,7 +347,7 @@ write.csv(
 
 cohort_LC <- cohort_LC %>% dplyr::select(-dplyr::contains(c("time", "number", "last"))) %>%
   addNumberVisit(cdm, ip.codes.w.desc, c(-365,-1)) %>% 
-  addEvent(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
+  addVisit(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
   compute()
 
 cohort_LC <- cohort_LC %>% 
@@ -353,7 +355,7 @@ cohort_LC <- cohort_LC %>%
                    by = "subject_id", copy = TRUE) %>%
   compute()
 
-if(all(c("number_visit", "last_hosp") %in% colnames(cohort_LC))) {
+if(sum(cohort_LC %>% dplyr::select(number_visit) %>% dplyr::pull()) == 0) {
   HU_hosp_summary <- cohort_LC %>%
     dplyr::rename("number_hosp" = "number_visit") %>%
     dplyr::ungroup() %>%
@@ -363,8 +365,7 @@ if(all(c("number_visit", "last_hosp") %in% colnames(cohort_LC))) {
     dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
     dplyr::arrange(cohort_definition_id) %>%
     compute()
-  # K is it a cbind?
-  HU_summary_final <- cbind(HU_summary,HU_hosp_summary)
+  HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cohort_definition_id")
 } else {
   HU_summary_final <- HU_summary
 }

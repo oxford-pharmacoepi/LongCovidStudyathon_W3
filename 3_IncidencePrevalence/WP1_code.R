@@ -265,7 +265,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
   inc <- IncidencePrevalence::estimateIncidence(
     cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome", 
     interval = c("years","months"),repeatedEvents = FALSE, 
-    completeDatabaseIntervals = FALSE, minCellCount = 5)
+    completeDatabaseIntervals = FALSE, minCellCount = 5) 
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
     cdm=cdm, resultList=list(inc), databaseName = db.name)
@@ -286,6 +286,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
   for(i in outcome_id) {
     cdm$outcome <- cdm[[tableOutcome]] %>%
       dplyr::filter(.data$cohort_definition_id == i)
+    if(cdm$outcome %>% tally() %>% pull() != 0) {
   inc <- IncidencePrevalence::estimateIncidence(
     cdm = cdm, denominatorTable = "denominator", outcomeTable = "outcome",
     interval = c("years","months"), repeatedEvents = FALSE, 
@@ -294,8 +295,9 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
     cdm=cdm, resultList=list(inc), databaseName = db.name)
   IncidencePrevalence::exportIncidencePrevalenceResults(
-    result=study_results, zipName=paste0("Allpop_",stem,"_",i,"NonVacc"), 
+    result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_NonVacc"), 
     outputFolder=output_ip) 
+  }
   }
   }
 }

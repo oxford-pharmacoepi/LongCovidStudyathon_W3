@@ -8,25 +8,25 @@ source(here::here("4_Characterisation","functions_characterisation.R"))
 if((doCharacterisation || doClustering) && doTrajectories) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      HUCohortsName, TrajCohortsName))
 } else if ((doCharacterisation || doClustering) && !doTrajectories) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      HUCohortsName))
 } else if (!(doCharacterisation || doClustering) && doTrajectories) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      TrajCohortsName))
 } else if (!(doCharacterisation || doClustering) && !doTrajectories) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName))
 }
 
@@ -63,13 +63,13 @@ if(doCharacterisation) {
   
   info(logger, '--- Looking at baseline characterisation')
   # Large scale characterisation
-  do_lsc(c(1:60), "all_base", BaseCohortsName)
-  do_lsc(c(1:180), "all_any", OverlapCohortsCName)
+  do_lsc(c(1:30), "all_base", BaseCohortsName)
+  do_lsc(c(1:60), "all_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at vaccination outcomes for characterisation')
   # Vaccination
-  do_vaccination_characterisation(c(1:60), "all_base", BaseCohortsName)
-  do_vaccination_characterisation(c(1:180), "all_any", OverlapCohortsCName)
+  do_vaccination_characterisation(c(1:30), "all_base", BaseCohortsName)
+  do_vaccination_characterisation(c(1:60), "all_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at healthcare utilisation outcomes for characterisation')
   # Healthcare Utilisation
@@ -79,30 +79,6 @@ if(doCharacterisation) {
     dplyr::filter(lubridate::year(.data$visit_start_date) >= 2016) %>%
     dplyr::compute()
   
-  do_hu(c(1:60), "all_base", BaseCohortsName)
-  do_hu(c(1:180), "all_any", OverlapCohortsCName)
-}
-
-if(doDrugUtilisation) {
-  # DRUG UTILISATION NO STRATA
-  info(logger, '--- Looking at drug utilisation')
-  
-  # Make code quicker by disregarding uninteresting drug data
-  cdm[["drug_exposure"]] <- cdm[["drug_exposure"]] %>%
-    dplyr::filter(lubridate::year(.data$drug_exposure_start_date) >= 2016) %>%
-    dplyr::compute()
-  
-  do_du(c(1:60), "all_base", BaseCohortsName)
-  do_du(c(1:180), "all_any", OverlapCohortsCName)
-}
-
-if(doTreatmentPatterns) {
-  info(logger, '-- Performing Treatment Patterns calculations')
-  # Treatment Patterns
-  for(i in c(1:60)) {
-    do_tp(i, c(61:92), BaseCohortsName)
-  }
-  for(i in c(1:180)) {
-    do_tp(i, c(181:212), OverlapCohortsCName)
-  }
+  do_hu(c(1:30), "all_base", BaseCohortsName)
+  do_hu(c(1:60), "all_any", OverlapCohortsCName)
 }

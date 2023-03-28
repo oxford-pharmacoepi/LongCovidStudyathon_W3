@@ -61,21 +61,34 @@ if (readInitialCohorts){
 # Instantiate study cohorts
 if(getStudyCohorts) {
   info(logger, 'GETTING STUDY COHORTS')
-  source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
+  if(onlyLC) {
+    source(here("2_StudyCohorts","GetStudyCohorts_onlyLC.R"), local = TRUE)
+    
+  } else {
+    source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
+  }
   info(logger, 'GOT STUDY COHORTS')
 }
 
 # Objective 1: Incidence and Prevalence
 if(doIncidencePrevalence) {
   info(logger, 'GETTING INCIDENCE AND PREVALENCE')
-  source(here("3_IncidencePrevalence","WP1_code.R"), local = TRUE)
+  if(onlyLC) {
+    source(here("3_IncidencePrevalence","WP1_code_onlyLC.R"), local = TRUE)
+  } else {
+    source(here("3_IncidencePrevalence","WP1_code.R"), local = TRUE)
+  }
   info(logger, 'GOT INCIDENCE AND PREVALENCE')
 }
 
 # Objective 2a: Characterisation
 if(doCharacterisation || doDrugUtilisation || doTreatmentPatterns) {
   info(logger, 'DOING LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
-  source(here("4_Characterisation","WP2_code.R"), local = TRUE)
+  if(onlyLC) {
+    source(here("4_Characterisation","WP2_code_onlyLC.R"), local = TRUE)
+  } else {
+    source(here("4_Characterisation","WP2_code.R"), local = TRUE)
+  }
   info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
 }
 

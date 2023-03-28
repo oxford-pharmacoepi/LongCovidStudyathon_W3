@@ -96,8 +96,8 @@ vaccine_data <- TRUE # Set to FALSE if you have no information on vaccination
 vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination,
 # but not on vaccine brand
 
-# Create counts table of Cohort Diagnostics
-tableCohortDiagnostics <- FALSE
+# If you can only ran Long Covid related analyses
+onlyLC <- FALSE
 
 # Run the study
 source(here("RunStudy.R"))

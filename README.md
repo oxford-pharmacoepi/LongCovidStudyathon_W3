@@ -20,15 +20,20 @@ to suit your particular needs.
 When you run that script, the whole code will start running. It will first
 instantiate the cohorts and then calculate everything for objectives 1, 2 and 3.
 If you re-run the code and the cohorts are already instantiated, you can set
-`instantiateCohorts = FALSE` so as to not repeat long calculations. 
+`instantiateCohorts = FALSE` so as to not repeat long calculations. Same with
+any other part of the study, like the creation of the study cohorts, 
+`getStudyCohorts = FALSE`, the incidence calculations, `doIncidencePrevalence = FALSE`,
+etc.
 
-## Clustering
-For LCA and network clustering, you might have to tune some parameters 
-yourself. (Explain)
+## Results
+All the results will be zipped into a folder called `[your database name]_Results`. 
+Some of them will have to be inspected and tuned afterwards, during the
+Studyathon, for instance the LCA clustering. 
 
 ## Trajectories
 For the trajectories part, note that it might not work if your database
-engine is not postgresql or (?), If so, please set it as `FALSE`.
+engine is not SQLite or Postgresql. If so, be aware that the package has not been
+tested against those types of database engines, so you might have to set it as `FALSE`.
 
 ## Plots
 The package does offer some visualisations, which you can check in your final

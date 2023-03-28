@@ -633,59 +633,62 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "Flu_PASC_any_age_(41,64)", "Flu_PASC_any_age_(65,120)")))
 
 
-
-# Characterisation cohorts stratified by vaccination
-do_overlap_vacc(1, 45, BaseCohortsName)
-do_overlap_vacc(2, 47, BaseCohortsName)
-do_overlap_vacc(3, 49, BaseCohortsName)
-do_overlap_vacc(4, 51, BaseCohortsName)
-do_overlap_vacc(1, 133, OverlapCohortsCName)
-do_overlap_vacc(2, 135, OverlapCohortsCName)
-do_overlap_vacc(3, 137, OverlapCohortsCName)
-do_overlap_vacc(4, 139, OverlapCohortsCName)
-do_overlap_vacc(5, 141, OverlapCohortsCName)
-do_overlap_vacc(6, 143, OverlapCohortsCName)
-do_overlap_vacc(7, 145, OverlapCohortsCName)
-do_overlap_vacc(8, 147, OverlapCohortsCName)
-do_overlap_vacc(9, 149, OverlapCohortsCName)
-do_overlap_vacc(10, 151, OverlapCohortsCName)
-do_overlap_vacc(11, 153, OverlapCohortsCName)
-do_overlap_vacc(12, 155, OverlapCohortsCName)
-
-names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(table_name = BaseCohortsName,
-                                           cohort_definition_id = c(45:52), 
-                                           cohort_name = c("Inf_vacc","Inf_not_vacc",
-                                                           "Reinf_vacc","Reinf_not_vacc",
-                                                           "Neg_vacc", "Neg_not_vacc",
-                                                           "Flu_vacc", "Flu_not_vacc")))
-names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(table_name = OverlapCohortsCName,
-                                           cohort_definition_id = c(133:156), 
-                                           cohort_name = c("Inf_LC_any_vacc",
-                                                           "Inf_LC_any_not_vacc",
-                                                           "Reinf_LC_any_vacc",
-                                                           "Reinf_LC_any_not_vacc",
-                                                           "Neg_LC_any_vacc", 
-                                                           "Neg_LC_any_not_vacc",
-                                                           "Flu_LC_any_vacc", 
-                                                           "Flu_LC_any_not_vacc",
-                                                           "Inf_LC_code_vacc",
-                                                           "Inf_LC_code_not_vacc",
-                                                           "Reinf_LC_code_vacc",
-                                                           "Reinf_LC_code_not_vacc",
-                                                           "Neg_LC_code_vacc", 
-                                                           "Neg_LC_code_not_vacc",
-                                                           "Flu_LC_code_vacc", 
-                                                           "Flu_LC_code_not_vacc",
-                                                           "Inf_PASC_any_vacc",
-                                                           "Inf_PASC_any_not_vacc",
-                                                           "Reinf_PASC_any_vacc",
-                                                           "Reinf_PASC_any_not_vacc",
-                                                           "Neg_PASC_any_vacc", 
-                                                           "Neg_PASC_any_not_vacc",
-                                                           "Flu_PASC_any_vacc", 
-                                                           "Flu_PASC_any_not_vacc") ))
+if(vaccine_data) {
+  # Characterisation cohorts stratified by vaccination
+  do_overlap_vacc(1, 45, BaseCohortsName)
+  do_overlap_vacc(2, 47, BaseCohortsName)
+  do_overlap_vacc(3, 49, BaseCohortsName)
+  do_overlap_vacc(4, 51, BaseCohortsName)
+  do_overlap_vacc(1, 133, OverlapCohortsCName)
+  do_overlap_vacc(2, 135, OverlapCohortsCName)
+  do_overlap_vacc(3, 137, OverlapCohortsCName)
+  do_overlap_vacc(4, 139, OverlapCohortsCName)
+  do_overlap_vacc(5, 141, OverlapCohortsCName)
+  do_overlap_vacc(6, 143, OverlapCohortsCName)
+  do_overlap_vacc(7, 145, OverlapCohortsCName)
+  do_overlap_vacc(8, 147, OverlapCohortsCName)
+  do_overlap_vacc(9, 149, OverlapCohortsCName)
+  do_overlap_vacc(10, 151, OverlapCohortsCName)
+  do_overlap_vacc(11, 153, OverlapCohortsCName)
+  do_overlap_vacc(12, 155, OverlapCohortsCName)
+  
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = BaseCohortsName,
+                                             cohort_definition_id = c(45:52), 
+                                             cohort_name = c("Inf_vacc","Inf_not_vacc",
+                                                             "Reinf_vacc","Reinf_not_vacc",
+                                                             "Neg_vacc", "Neg_not_vacc",
+                                                             "Flu_vacc", "Flu_not_vacc")))
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = OverlapCohortsCName,
+                                             cohort_definition_id = c(133:156), 
+                                             cohort_name = c("Inf_LC_any_vacc",
+                                                             "Inf_LC_any_not_vacc",
+                                                             "Reinf_LC_any_vacc",
+                                                             "Reinf_LC_any_not_vacc",
+                                                             "Neg_LC_any_vacc", 
+                                                             "Neg_LC_any_not_vacc",
+                                                             "Flu_LC_any_vacc", 
+                                                             "Flu_LC_any_not_vacc",
+                                                             "Inf_LC_code_vacc",
+                                                             "Inf_LC_code_not_vacc",
+                                                             "Reinf_LC_code_vacc",
+                                                             "Reinf_LC_code_not_vacc",
+                                                             "Neg_LC_code_vacc", 
+                                                             "Neg_LC_code_not_vacc",
+                                                             "Flu_LC_code_vacc", 
+                                                             "Flu_LC_code_not_vacc",
+                                                             "Inf_PASC_any_vacc",
+                                                             "Inf_PASC_any_not_vacc",
+                                                             "Reinf_PASC_any_vacc",
+                                                             "Reinf_PASC_any_not_vacc",
+                                                             "Neg_PASC_any_vacc", 
+                                                             "Neg_PASC_any_not_vacc",
+                                                             "Flu_PASC_any_vacc", 
+                                                             "Flu_PASC_any_not_vacc") ))
+  
+  
+}
 
 # Characterisation cohorts stratified by calendar period
 do_strata_calendar(1, 53, BaseCohortsName)

@@ -109,7 +109,11 @@ if(doTrajectories) {
 # IP plots
 if(doIncidencePrevalence) {
   info(logger, 'PLOTTING RESULTS')
-  source(here("7_Plots","Plots.R"), local = TRUE)
+  if(onlyLC) {
+    source(here("7_Plots","plots_onlyLC.R"), local = TRUE)
+  } else {
+    source(here("7_Plots","plots.R"), local = TRUE)
+  }
   info(logger, 'RESULTS PLOTTED')
 }
 

@@ -57,19 +57,28 @@ if(doTreatmentPatterns) {
 names_final_cohorts <- read.csv(file.path(tempDir,paste0(db.name,"_cohorts.csv")))
 
 # -------------------------------------------------------------------
+
+if(vaccine_data) {
+  cohorts_interest_base <- c(1:60)
+  cohorts_interest_any <- c(1:180)
+} else {
+  cohorts_interest_base <- c(1:44, 53:60)
+  cohorts_interest_any <- c(1:132, 157:180)
+}
+
 if(doCharacterisation) {
   # CHARACTERISATION NO STRATA, SEX STRATA, AGE STRATA, VACCINATION STRATA, CALENDAR PERIOD STRATA
   info(logger, '-- Performing Large-scale characterisation for all the cohorts of interest')
   
   info(logger, '--- Looking at baseline characterisation')
   # Large scale characterisation
-  do_lsc(c(1:60), "all_base", BaseCohortsName)
-  do_lsc(c(1:180), "all_any", OverlapCohortsCName)
+  do_lsc(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_lsc(cohorts_interest_any, "all_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at vaccination outcomes for characterisation')
   # Vaccination
-  do_vaccination_characterisation(c(1:60), "all_base", BaseCohortsName)
-  do_vaccination_characterisation(c(1:180), "all_any", OverlapCohortsCName)
+  do_vaccination_characterisation(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_vaccination_characterisation(cohorts_interest_any, "all_any", OverlapCohortsCName)
   
   info(logger, '--- Looking at healthcare utilisation outcomes for characterisation')
   # Healthcare Utilisation
@@ -79,8 +88,8 @@ if(doCharacterisation) {
     dplyr::filter(lubridate::year(.data$visit_start_date) >= 2016) %>%
     dplyr::compute()
   
-  do_hu(c(1:60), "all_base", BaseCohortsName)
-  do_hu(c(1:180), "all_any", OverlapCohortsCName)
+  do_hu(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_hu(cohorts_interest_any, "all_any", OverlapCohortsCName)
 }
 
 if(doDrugUtilisation) {
@@ -92,17 +101,17 @@ if(doDrugUtilisation) {
     dplyr::filter(lubridate::year(.data$drug_exposure_start_date) >= 2016) %>%
     dplyr::compute()
   
-  do_du(c(1:60), "all_base", BaseCohortsName)
-  do_du(c(1:180), "all_any", OverlapCohortsCName)
+  do_du(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_du(cohorts_interest_any, "all_any", OverlapCohortsCName)
 }
 
 if(doTreatmentPatterns) {
   info(logger, '-- Performing Treatment Patterns calculations')
   # Treatment Patterns
-  for(i in c(1:60)) {
+  for(i in cohorts_interest_base) {
     do_tp(i, c(61:92), BaseCohortsName)
   }
-  for(i in c(1:180)) {
+  for(i in cohorts_interest_any) {
     do_tp(i, c(181:212), OverlapCohortsCName)
   }
 }

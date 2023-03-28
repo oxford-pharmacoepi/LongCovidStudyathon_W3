@@ -25,12 +25,12 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
                      .groups = 'drop') %>%
     compute()
   
-  write.csv(
+  write_csv(
     vacc_counts,
     file = here::here(output_lsc, paste0("Vaccination_doses_",stem_name,".csv")),
     row.names = FALSE
   )
-  write.csv(
+  write_csv(
     vacc_lastdose,
     file = here::here(output_lsc, paste0("Vaccination_last_dose_",stem_name,".csv")),
     row.names = FALSE
@@ -39,7 +39,7 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
 
 do_lsc <- function(cohort_ids_interest, stem_name, tableName) {
   # Check if charac is list or just table, because then no [[x]]
-  charac <- LargeScaleCharacteristics::getLargeScaleCharacteristics(
+  charac <- getLargeScaleCharacteristics(
     cdm, targetCohortName = tableName, 
     targetCohortId = cohort_ids_interest,
     tablesToCharacterize = "condition_occurrence",
@@ -49,24 +49,15 @@ do_lsc <- function(cohort_ids_interest, stem_name, tableName) {
       c(0, 0)
     ))
   
- # Like this maybe? 
-  write.csv(
+  write_csv(
     charac,
-    file = here::here(output_lsc, paste0("Characterisation_",stem_name,".csv")),
-    row.names = FALSE
+    file = here::here(output_lsc, paste0("Characterisation_",stem_name,".csv"))
   )
-  
-#  for(i in 1:length(charac)) {
-#    write.csv(
-#      charac[[i]],
-#      file = here::here(output_lsc, paste0("Characterisation_",stem_name,"_",names(charac)[i],".csv")),
-#      row.names = FALSE
-#    )
-#  }
 }
+  
 
 do_du <- function(cohort_ids_interest, stem_name, tableName) {
-  charac <- LargeScaleCharacteristics::getLargeScaleCharacteristics(
+  charac <- getLargeScaleCharacteristics(
     cdm, targetCohortName = tableName, 
     targetCohortId = cohort_ids_interest,
     tablesToCharacterize = "drug_exposure",
@@ -75,20 +66,10 @@ do_du <- function(cohort_ids_interest, stem_name, tableName) {
       c(0, 0), c(1, 30), c(31, 90), c(91, 180), c(181, 365)
     ))
   
-  # Like this maybe? 
-  write.csv(
+  write_csv(
     charac,
-    file = here::here(output_lsc, paste0("DrugUtilisation_",stem_name,".csv")),
-    row.names = FALSE
+    file = here::here(output_du, paste0("DrugUtilisation_",stem_name,".csv"))
   )
-  
-#  for(i in 1:length(charac)) {
-#    write.csv(
-#      charac[[i]],
-#      file = here::here(output_du, paste0("DrugUtilisation_",stem_name,"_",names(charac)[i],".csv")),
-#      row.names = FALSE
-#    )
-#  }
   
 }
 
@@ -123,10 +104,9 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
     dplyr::arrange(cohort_definition_id) %>%
     compute()
   
-  write.csv(
+  write_csv(
     HU_summary,
-    file = here::here(output_lsc, paste0("Healthcare_Utilisation_noHosp_",stem_name,".csv")),
-    row.names = FALSE
+    file = here::here(output_lsc, paste0("Healthcare_Utilisation_noHosp_",stem_name,".csv"))
   )
   
   # Gte hospitalisation codes
@@ -154,16 +134,14 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
       dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
       dplyr::arrange(cohort_definition_id) %>%
       compute()
-    # K is it a cbind?
     HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cohort_definition_id")
   } else {
     HU_summary_final <- HU_summary
   }
   
-  write.csv(
+  write_csv(
     HU_summary_final,
-    file = here::here(output_lsc, paste0("Healthcare_Utilisation_",stem_name,".csv")),
-    row.names = FALSE
+    file = here::here(output_lsc, paste0("Healthcare_Utilisation_",stem_name,".csv"))
   )
   
   }
@@ -205,6 +183,9 @@ do_tp <- function(cohort_base_id, tp_ids, tableName) {
     cohortSettings = cohortSettings,
     studyName = targetname
   )
+  
+  pathwaySettings$all_settings[17,2] = FALSE
+  
   saveSettings <- TreatmentPatterns::createSaveSettings(databaseName = db.name,
                                                         rootFolder = here(),
                                                         outputFolder = here(output_tp))

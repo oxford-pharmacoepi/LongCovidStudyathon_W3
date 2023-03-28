@@ -2,7 +2,7 @@
 # PROVISIONAL PLOTS FOR CHECKS PRIOR TO THE TIDYING UP IN THE STUDYATHON
 ################################################################################
 
-# Think how to group: reinf with reinf? outcome with outcome? etc
+# Think how to group better later on
 
 # Output folder for plots
 output_plots <- file.path(tempDir,"Plots_IP")
@@ -878,8 +878,3 @@ for(b in base_names) {
     
   }
 }
-
-################################################################################
-# Characterisation: tidy tables (LSC, DU, vaccination, HU)
-# For all cohorts and strata
-

@@ -1,32 +1,39 @@
 # This is the only code the user should interact with
 # Runs the Studyathon Long Covid and PASC Project
 
-# Required packages :
+# Manage project dependencies
+# the following will prompt you to install the various packages used in the study 
+# You must have renv package installed. Otherwise, run: install.packages("renv")
+renv::activate()
+renv::restore() 
+
+# Required packages from CRAN:
+library("RPostgres")
+library("tools")
 library("DBI")
 library("dplyr")
 library("dbplyr")
-library("CirceR")
 library("CDMConnector")
-library("DatabaseConnector")
 library("here")
 library("log4r")
 library("zip")
 library("poLCA")
 library("igraph")
 library("psych")
-library("Trajectories")
 library("MatchIt")
 library("purrr")
-library("MCL")
 library("ggplot2")
-library("colorBlindness")
-library("networkD3")
+library("IncidencePrevalence")
+library("readr")
 
-# get with remotes
-library(IncidencePrevalence)
-library(PatientProfiles)
-library(LargeScaleCharacteristics)
-library(TreatmentPatterns)
+# install the following packages like this, with remotes 
+# library("remotes")
+# remotes::install_github("EHDEN/Trajectories")
+library("Trajectories")
+# remotes::install_github("OHDSI/DatabaseConnector")
+library("DatabaseConnector")
+# remotes::install_github("OHDSI/CirceR")
+library("CirceR")
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
@@ -76,7 +83,6 @@ latest_data_availability <- as.Date("...")
 # Decide which parts of the study you want to run 
 readInitialCohorts <- TRUE
 getStudyCohorts <- TRUE
-doCohortDiagnostics <- TRUE
 doIncidencePrevalence <- TRUE
 doCharacterisation <- TRUE
 doDrugUtilisation <- TRUE

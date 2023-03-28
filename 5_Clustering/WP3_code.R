@@ -53,8 +53,8 @@ names_symptoms <- names_final_cohorts %>%
   dplyr::filter(.data$cohort_definition_id %in% c(1:25,27)) %>%
   dplyr::select(cohort_definition_id, cohort_name) %>% compute()
 
-symptoms_LC <- symptoms_LC %>% PatientProfiles::addAge(cdm) %>% 
-  PatientProfiles::addSex(cdm) %>% collect()
+symptoms_LC <- symptoms_LC %>% addAge(cdm) %>% 
+  addSex(cdm) %>% collect()
 symptoms_LC <- symptoms_LC %>% 
   dplyr::left_join(names_symptoms, 
             by = c("cohort_definition_id")) %>% 
@@ -86,7 +86,8 @@ data_LCA[is.na(data_LCA)] <- 0
 data_LCA <- data_LCA %>% distinct()
 data_LCA <- data_LCA %>% dplyr::left_join(symptoms_LC %>% 
                                      dplyr::select(subject_id,age,sex), 
-                                   by = "subject_id")
+                                   by = "subject_id") %>%
+  distinct()
 
 # Use package polCA
 # Fit latent class model
@@ -305,7 +306,12 @@ cohort_LC <- cohort_LC %>%
   dplyr::union(
     cdm[[OverlapCohortsCName]] %>% 
       dplyr::filter(.data$cohort_definition_id == 5) %>%
-      dplyr::mutate(cohort_definition_id = 27))
+      dplyr::mutate(cohort_definition_id = 27)) %>%
+  dplyr::compute()
+
+cdm[["visit_occurrence"]] <- cdm[["visit_occurrence"]] %>%
+  dplyr::filter(lubridate::year(.data$visit_start_date) >= 2016) %>%
+  dplyr::compute()
 
 cohort_LC <- cohort_LC %>% 
   addEvent(cdm, HUCohortsName, 1, c(-365,-1), "last_icu", order = "last") %>%
@@ -328,7 +334,7 @@ cohort_LC <- cohort_LC %>%
 HU_summary <- cohort_LC %>%
   dplyr::rename("number_gp" = "number_visit") %>%
   dplyr::ungroup() %>%
-  dplyr::group_by(cohort_definition_id) %>%
+  dplyr::group_by(cluster_assignment) %>%
   dplyr::mutate(time_GP = !!CDMConnector::datediff("last_gp", "cohort_start_date")) %>%
   dplyr::mutate(time_icu = !!CDMConnector::datediff("last_icu", "cohort_start_date")) %>%
   dplyr::mutate(time_vent = !!CDMConnector::datediff("last_vent", "cohort_start_date")) %>%
@@ -336,7 +342,7 @@ HU_summary <- cohort_LC %>%
   dplyr::mutate(time_ecmo = !!CDMConnector::datediff("last_ecmo", "cohort_start_date")) %>%
   dplyr::select(dplyr::starts_with(c("number","time"))) %>%
   dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
-  dplyr::arrange(cohort_definition_id) %>%
+  dplyr::arrange(cluster_assignment) %>%
   compute()
 
 write.csv(
@@ -345,7 +351,7 @@ write.csv(
   row.names = FALSE
 )
 
-cohort_LC <- cohort_LC %>% dplyr::select(-dplyr::contains(c("time", "number", "last"))) %>%
+cohort_LC <- cohort_LC %>% dplyr::select(-dplyr::contains(c("time", "number", "last", "cluster"))) %>%
   addNumberVisit(cdm, ip.codes.w.desc, c(-365,-1)) %>% 
   addVisit(cdm, "visit_occurrence", ip.codes.w.desc, c(-365,-1), "last_hosp", eventDate = "visit_start_date", order = "last") %>%
   compute()
@@ -359,13 +365,13 @@ if(sum(cohort_LC %>% dplyr::select(number_visit) %>% dplyr::pull()) == 0) {
   HU_hosp_summary <- cohort_LC %>%
     dplyr::rename("number_hosp" = "number_visit") %>%
     dplyr::ungroup() %>%
-    dplyr::group_by(cohort_definition_id) %>%
+    dplyr::group_by(cluster_assignment) %>%
     mutate(time_visit = !!CDMConnector::datediff("last_hosp", "cohort_start_date")) %>%
     dplyr::select(dplyr::starts_with(c("number","time"))) %>%
     dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
-    dplyr::arrange(cohort_definition_id) %>%
+    dplyr::arrange(cluster_assignment) %>%
     compute()
-  HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cohort_definition_id")
+  HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cluster_assignment")
 } else {
   HU_summary_final <- HU_summary
 }
@@ -520,6 +526,3 @@ plot(c7,ig_full)
 dev.off()
 
 capture.output(communities(c7), file = here::here(output_clustering, "Communities_CM.txt"))
-
-
-

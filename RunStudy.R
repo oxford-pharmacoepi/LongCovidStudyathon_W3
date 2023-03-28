@@ -37,6 +37,9 @@ CohortNames <- c(InitialCohortsName, BaseCohortsName, LongCovidCohortsName,
 # get functions used throughout this study
 source(here::here("functions.R"))
 
+# Get TreatmentPatterns code
+devtools::load_all(here::here("TreatmentPatterns_code"))
+
 # Read initial cohorts
 if (readInitialCohorts){
   info(logger, 'INSTANTIATING INITIAL COHORTS')
@@ -90,12 +93,12 @@ if(doTrajectories) {
   info(logger, 'FINISHED TRAJECTORIES')
 }
 
-# Preliminary plots
-#if(createPlots) {
-#  info(logger, 'PLOTTING RESULTS')
-#  source(here("7_Plots","Plots.R"), local = TRUE)
-#  info(logger, 'RESULTS PLOTTED')
-#}
+# IP plots
+if(doIncidencePrevalence) {
+  info(logger, 'PLOTTING RESULTS')
+  source(here("7_Plots","Plots.R"), local = TRUE)
+  info(logger, 'RESULTS PLOTTED')
+}
 
 zip::zip(zipfile = file.path(output.folder, paste0(zipName, ".zip")),
          files = list.files(tempDir, full.names = TRUE))

@@ -13,5 +13,5 @@
   "daysBeforeIndexDate": [0],
   "cohortName": ["Long Covid"],
   "description": ["Long COVID study"],
-  "RRrangeToSkip": [0.8, 1.2]
+  "RRrangeToSkip": [0.9, 1.1]
 }

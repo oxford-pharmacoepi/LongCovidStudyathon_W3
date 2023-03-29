@@ -175,7 +175,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
   }
 
 do_tp <- function(cohort_base_id, tp_ids, tableName) {
-    dataSettings <- TreatmentPatterns::createDataSettings(
+    dataSettings <- createDataSettings(
     connectionDetails = connectionDetails,
     cdmDatabaseSchema = cdm_database_schema,
     resultSchema = results_database_schema,
@@ -202,26 +202,26 @@ do_tp <- function(cohort_base_id, tp_ids, tableName) {
     # Create settings first (the folder)
     write_csv(file = here(output_tp,"settings","cohorts_to_create.csv"),cohortscreate)
     
-  cohortSettings <- TreatmentPatterns::createCohortSettings(
+  cohortSettings <- createCohortSettings(
     targetCohorts = targetCohort,
     eventCohorts = eventCohorts
   )
   
-  pathwaySettings <- TreatmentPatterns::createPathwaySettings(
+  pathwaySettings <- createPathwaySettings(
     cohortSettings = cohortSettings,
     studyName = targetname
   )
   
   pathwaySettings$all_settings[17,2] = FALSE
   
-  saveSettings <- TreatmentPatterns::createSaveSettings(databaseName = db.name,
+  saveSettings <- createSaveSettings(databaseName = db.name,
                                                         rootFolder = here(),
                                                         outputFolder = here(output_tp))
-  TreatmentPatterns::constructPathways(
+  constructPathways(
     dataSettings = dataSettings,
     pathwaySettings = pathwaySettings,
     saveSettings = saveSettings,
     tableName = tableName)
   
-  TreatmentPatterns::generateOutput(saveSettings = saveSettings)
+  generateOutput(saveSettings = saveSettings)
 }

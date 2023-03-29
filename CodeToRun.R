@@ -72,10 +72,14 @@ vocabulary_database_schema <- cdm_database_schema
 results_database_schema <- "..."
 
 # Study start date, should not change this
-study_start_date <- as.Date("...")
+study_start_date <- as.Date("2020-09-01")
 
 # Covid end date, country specific, when testing ended
+# Might not be applicable, otherwise set as latest_data_availability
 covid_end_date <- as.Date("...")
+
+# Start date of omicron variant, country specific
+omicron_start_date <- as.Date("...")
 
 # Latest data availability, to know until when to calculate incidences
 latest_data_availability <- as.Date("...") 

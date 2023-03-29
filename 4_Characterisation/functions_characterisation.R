@@ -38,7 +38,6 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
 }
 
 do_lsc <- function(cohort_ids_interest, stem_name, tableName) {
-  # Check if charac is list or just table, because then no [[x]]
   charac <- getLargeScaleCharacteristics(
     cdm, targetCohortName = tableName, 
     targetCohortId = cohort_ids_interest,
@@ -49,14 +48,29 @@ do_lsc <- function(cohort_ids_interest, stem_name, tableName) {
       c(0, 0)
     ))
   
-  write_csv(
-    charac,
-    file = here::here(output_lsc, paste0("Characterisation_",stem_name,".csv"))
-  )
+  if(any) {
+    charac_LC <- charac %>% 
+      dplyr::filter(cohort_definition_id %in% c(1:8, 13:28, 37:100, 133:148, 157:172))
+    charac_PASC <- charac %>%
+      dplyr::filter(cohort_definition_id %in% c(9:12, 29:36, 101:132, 149:156, 173:180))
+    write_csv(
+      charac_LC,
+      file = here::here(output_lsc, paste0("Characterisation_",stem_name,"_LC.csv"))
+    )
+    write_csv(
+      charac_PASC,
+      file = here::here(output_lsc, paste0("Characterisation_",stem_name,"_PASC.csv"))
+    )
+  } else {
+    write_csv(
+      charac,
+      file = here::here(output_lsc, paste0("Characterisation_",stem_name,".csv"))
+    )
+  }
 }
   
 
-do_du <- function(cohort_ids_interest, stem_name, tableName) {
+do_du <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
   charac <- getLargeScaleCharacteristics(
     cdm, targetCohortName = tableName, 
     targetCohortId = cohort_ids_interest,
@@ -66,11 +80,25 @@ do_du <- function(cohort_ids_interest, stem_name, tableName) {
       c(0, 0), c(1, 30), c(31, 90), c(91, 180), c(181, 365)
     ))
   
-  write_csv(
-    charac,
-    file = here::here(output_du, paste0("DrugUtilisation_",stem_name,".csv"))
-  )
-  
+  if(any) {
+    charac_LC <- charac %>% 
+      dplyr::filter(cohort_definition_id %in% c(1:8, 13:28, 37:100, 133:148, 157:172))
+    charac_PASC <- charac %>%
+      dplyr::filter(cohort_definition_id %in% c(9:12, 29:36, 101:132, 149:156, 173:180))
+    write_csv(
+      charac_LC,
+      file = here::here(output_du, paste0("DrugUtilisation_",stem_name,"_LC.csv"))
+    )
+    write_csv(
+      charac_PASC,
+      file = here::here(output_du, paste0("DrugUtilisation_",stem_name,"_PASC.csv"))
+    )
+  } else {
+    write_csv(
+      charac,
+      file = here::here(output_du, paste0("DrugUtilisation_",stem_name,".csv"))
+    )
+  }
 }
 
 do_hu <- function(cohort_ids_interest, stem_name, tableName) {

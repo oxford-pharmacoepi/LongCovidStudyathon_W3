@@ -100,7 +100,7 @@ vaccine_data <- TRUE # Set to FALSE if you have no information on vaccination
 vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination,
 # but not on vaccine brand
 
-# If you can only ran Long Covid related analyses
+# If you can only run Long Covid related analyses
 onlyLC <- FALSE
 
 # Run the study

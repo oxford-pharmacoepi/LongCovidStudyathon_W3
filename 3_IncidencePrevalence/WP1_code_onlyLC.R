@@ -109,9 +109,9 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
   }
   
   vacc_id <- ifelse(base_id == 1, 23,
-                    ifelse(base_id == 2, 25, NA))))
+                    ifelse(base_id == 2, 25, NA))
   nonvacc_id <- ifelse(base_id == 1, 24, 
-                       ifelse(base_id == 2, 26, NA))))
+                       ifelse(base_id == 2, 26, NA))
   
   message("- Vaccination strata")
   # Vaccination strata

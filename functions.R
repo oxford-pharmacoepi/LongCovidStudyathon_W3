@@ -413,153 +413,7 @@ addMultipleEvent <- function(x, cdm, eventTableName, eventId = NULL, window = c(
   return(xx)
 }
 
-addAge <- function(x,
-                   cdm,
-                   ageAt = "cohort_start_date",
-                   defaultMonth = 1,
-                   defaultDay = 1,
-                   imposeMonth = TRUE,
-                   imposeDay = TRUE,
-                   tablePrefix = NULL) {
-  
-  errorMessage <- checkmate::makeAssertCollection()
-  
-  xCheck <- inherits(x, "tbl_dbi")
-  if (!isTRUE(xCheck)) {
-    errorMessage$push(
-      "- x is not a table"
-    )
-  }
-  # check cdm exist
-  checkmate::assertClass(cdm, "cdm_reference", add = errorMessage)
-  
-  # check if ageAt length = 1 and is in table x
-  checkmate::assertCharacter(ageAt, len = 1, add = errorMessage)
-  
-  ageAtExists <-
-    checkmate::assertTRUE(ageAt %in% colnames(x), add = errorMessage)
-  
-  if (!isTRUE(ageAtExists)) {
-    errorMessage$push("- ageAt not found in table")
-  }
-  
-  columnCheck <- ("subject_id" %in% colnames(x) || "person_id" %in% colnames(x))
-  if (!isTRUE(columnCheck)) {
-    errorMessage$push(
-      "- neither `subject_id` nor `person_id` are columns of x"
-    )
-  }
-  
-  PersonExists <- "person" %in% names(cdm)
-  if (!isTRUE(PersonExists)) {
-    errorMessage$push(
-      "- `person` is not found in cdm"
-    )
-  }
-  PersonCheck <- inherits(cdm$person, "tbl_dbi")
-  if (!isTRUE(PersonCheck)) {
-    errorMessage$push(
-      "- table `person` is not of the right type"
-    )
-  }
-  
-  # check if default imputation value for month and day are within range allowed
-  checkmate::assertInt(defaultMonth, lower = 1, upper = 12)
-  checkmate::assertInt(defaultDay, lower = 1, upper = 31)
-  
-  # check if imposeMonth and compute and tablePrefix are logical
-  checkmate::assertLogical(imposeMonth, add = errorMessage)
-  checkmate::assertLogical(imposeDay, add = errorMessage)
-  checkmate::assertCharacter(
-    tablePrefix, len = 1, null.ok = TRUE, add = errorMessage
-  )
-  
-  defaultMonth <- as.integer(defaultMonth)
-  defaultDay <- as.integer(defaultDay)
-  
-  checkmate::reportAssertions(collection = errorMessage)
-  
-  # rename so both x and person table contain subject_id
-  if ("subject_id" %in% colnames(x) == FALSE) {
-    x <- x %>%
-      dplyr::rename("subject_id" = "person_id")
-  } else {
-    x <- x
-  }
-  
-  person <- cdm[["person"]] %>%
-    dplyr::rename("subject_id" = "person_id") %>%
-    dplyr::inner_join(x %>%
-                        dplyr::select("subject_id", dplyr::all_of(ageAt)) %>%
-                        dplyr::distinct(),
-                      by = "subject_id")
-  
-  if (imposeMonth == TRUE) {
-    person <- person %>%
-      dplyr::mutate(month_of_birth = .env$defaultMonth)
-  } else {
-    person <- person %>%
-      dplyr::mutate(month_of_birth = dplyr::if_else(
-        is.na(.data$month_of_birth),
-        .env$defaultMonth,
-        .data$month_of_birth
-      ))
-  }
-  
-  if (imposeDay == TRUE) {
-    person <- person %>%
-      dplyr::mutate(day_of_birth = .env$defaultDay)
-  } else {
-    person <- person %>%
-      dplyr::mutate(day_of_birth = dplyr::if_else(
-        is.na(.data$day_of_birth),
-        .env$defaultDay,
-        .data$day_of_birth
-      ))
-  }
-  
-  person <- person %>%
-    dplyr::filter(!is.na(.data$year_of_birth)) %>%
-    dplyr::mutate(year_of_birth1 = as.character(as.integer(.data$year_of_birth))) %>%
-    dplyr::mutate(month_of_birth1 = as.character(as.integer(.data$month_of_birth))) %>%
-    dplyr::mutate(day_of_birth1 = as.character(as.integer(.data$day_of_birth))) %>%
-    dplyr::mutate(birth_date = as.Date(
-      paste0(
-        .data$year_of_birth1,
-        "-",
-        .data$month_of_birth1,
-        "-",
-        .data$day_of_birth1
-      )
-    )) %>%
-    dplyr::mutate(age = floor(dbplyr::sql(
-      sqlGetAge(
-        dialect = CDMConnector::dbms(cdm),
-        dob = "birth_date",
-        dateOfInterest = ageAt
-      )
-    ))) %>%
-    dplyr::select("subject_id", dplyr::all_of(ageAt), "age") %>%
-    dplyr::right_join(x, by = c("subject_id", ageAt)) %>%
-    dplyr::select(dplyr::all_of(colnames(x)), "age")
-  if(is.null(tablePrefix)){
-    person <- person %>%
-      CDMConnector::computeQuery()
-  } else {
-    person <- person %>%
-      CDMConnector::computeQuery(name = paste0(tablePrefix,
-                                               "_person_sample"),
-                                 temporary = FALSE,
-                                 schema = attr(cdm, "write_schema"),
-                                 overwrite = TRUE)
-  }
-  return(person)
-}
-
-addSex <- function(x,
-                   cdm,
-                   name = "sex",
-                   tablePrefix = NULL) {
+addSex <- function(x, cdm, name = "sex", tablePrefix = NULL) {
   ## check for standard types of user error
   errorMessage <- checkmate::makeAssertCollection()
   
@@ -669,21 +523,9 @@ addSex <- function(x,
   return(x)
 }
 
-getLargeScaleCharacteristics <- function(cdm,
-                                         targetCohortName,
-                                         targetCohortId = NULL,
-                                         temporalWindows = list(
-                                           c(NA, -366), c(-365, -91),
-                                           c(-365, -31), c(-90, -1), c(-30, -1),
-                                           c(0, 0), c(1, 30), c(1, 90),
-                                           c(31, 365), c(91, 365), c(366, NA)
-                                         ),
-                                         tablesToCharacterize = c(
-                                           "condition_occurrence", "drug_era",
-                                           "procedure_occurrence", "measurement"
-                                         ),
-                                         overlap = TRUE,
-                                         minimumCellCount = 5) {
+getLargeScaleCharacteristics <- function(cdm, targetCohortName, targetCohortId = NULL, temporalWindows = list( c(NA, -366), c(-365, -91), c(-365, -31), c(-90, -1), c(-30, -1), c(0, 0), c(1, 30), c(1, 90),c(31, 365), c(91, 365), c(366, NA)),
+                                         tablesToCharacterize = c("condition_occurrence", "drug_era","procedure_occurrence", "measurement"),
+                                         overlap = TRUE, minimumCellCount = 5) {
   get_start_date <- list(
     "visit_occurrence" = "visit_start_date",
     "condition_occurrence" = "condition_start_date",
@@ -1093,12 +935,7 @@ getLargeScaleCharacteristics <- function(cdm,
   return(result)
 }
 
-supressCount <- function(result,
-                         minimumCellCounts = 5,
-                         globalVariables = c(
-                           "number_observations", "number_subjects"
-                         ),
-                         estimatesToObscure = "count") {
+supressCount <- function(result,minimumCellCounts = 5,globalVariables = c("number_observations", "number_subjects"), estimatesToObscure = "count") {
   
   ## check for standard types of user error
   errorMessage <- checkmate::makeAssertCollection()
@@ -1159,11 +996,7 @@ supressCount <- function(result,
 }
 
 
-addInObservation <- function(x,
-                             cdm,
-                             observationAt = "cohort_start_date",
-                             name = "in_observation",
-                             tablePrefix = NULL) {
+addInObservation <- function(x, cdm, observationAt = "cohort_start_date", name = "in_observation", tablePrefix = NULL) {
   
   ## check for standard types of user error
   

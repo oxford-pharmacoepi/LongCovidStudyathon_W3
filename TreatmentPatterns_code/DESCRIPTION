@@ -1,0 +1,56 @@
+Package: TreatmentPatterns
+Type: Package
+Title: A package to analyse real-world treatment patterns of a study population of interest
+Version: 2.0.0
+Author: Aniek F Markus
+Maintainer: Maarten van Kessel <m.l.vankessel@erasmusmc.nl>
+Description: This package gives insight in treatment patterns, the following
+  tasks should be performed sequentially:
+  1. Construct treatment pathways.
+  2. Generate output (sunburst plots, Sankey diagrams and more).
+  3. Launch shiny application to visualize the results.
+Depends:
+  R (>= 4.0)
+Imports: 
+    DatabaseConnector (>= 6.0.0),
+    checkmate,
+    data.table,
+    dplyr,
+    SqlRender,
+    stringr,
+    stringi,
+    readr,
+    rjson,
+    jsonlite,
+    reshape2,
+    googleVis,
+    webshot2 (>= 0.1.0),
+    ParallelLogger,
+    fs,
+    glue,
+    zip,
+    shiny,
+    OhdsiSharing,
+    rlang
+Remotes:
+    OHDSI/OhdsiSharing,
+    OHDSI/Eunomia,
+    OHDSI/CohortDiagnostics,
+    OHDSI/CirceR,
+    OHDSI/CohortGenerator
+Suggests:
+    tibble,
+    testthat (>= 3.0.0),
+    usethis,
+    knitr,
+    Eunomia,
+    CohortDiagnostics,
+    CohortGenerator,
+    CirceR,
+    rmarkdown
+License: Apache License 2.0
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.2.3
+VignetteBuilder: knitr
+Config/testthat/edition: 3

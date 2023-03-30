@@ -404,7 +404,7 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
       attrition <- rbind(attrition, 
                          dplyr::tibble(number_observations = current %>% dplyr::tally()
                                        %>% dplyr::pull(), reason = paste0("Entry after ",
-                                                                          S_start_date)))
+                                                                          study_start_date)))
     }
     
     if(first_event) {

@@ -242,7 +242,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         cohort_start_date = min(vacc_date, na.rm = TRUE)
       ) %>% dplyr::mutate(cohort_definition_id = 1) %>%
       left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date, .eath_date))) %>%
+      dplyr::mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date, .death_date))) %>%
       dplyr::mutate(cohort_start_date = .data$cohort_start_date + lubridate::days(14)) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
@@ -494,11 +494,18 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "LC_code_inf","LC_code_reinf","LC_code_neg","LC_code_flu",
                                                           "PASC_any_inf","PASC_any_reinf","PASC_any_neg","PASC_any_ flu")))
 
-                         
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                   PascCohortsName,MedCondCohortsName,VaccCohortsName,
-                                   OverlapCohortsCName))
+if(vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName))
+} else {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
+                                     OverlapCohortsCName))
+}                        
+
 
 # Characterisation cohorts stratified by sex
 do_sex_strata(1, 5, BaseCohortsName)
@@ -806,10 +813,17 @@ for(i in base_ids) {
   }
 }
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                   PascCohortsName,MedCondCohortsName,VaccCohortsName,
-                                   OverlapCohortsCName,OverlapCohortsIPName))
+if(vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+} else {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+}
 
 # -------------------------------------------------------------------
 # TREATMENT PATTERNS and HEALTHCARE UTILISATION COHORTS, TRAJ COHORT
@@ -830,7 +844,7 @@ names_final_cohorts <- rbind(names_final_cohorts,
 
 }
 
-if(doCharacterisation || doClusteringLCA) {
+if(doCharacterisation || doClustering) {
   # Get Healthcare Utilisation outcomes for characterisation and clustering
   HU_cohorts <- CDMConnector::readCohortSet(here::here("4_Characterisation","HU_cohorts"))
   cdm <- CDMConnector::generateCohortSet(cdm, HU_cohorts,

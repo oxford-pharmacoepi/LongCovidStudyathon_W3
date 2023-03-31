@@ -108,6 +108,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
   }
   }
   
+  if(vaccine_data) {
   vacc_id <- ifelse(base_id == 1, 45,
                     ifelse(base_id == 2, 47,
                            ifelse(base_id == 3, 49, 
@@ -142,7 +143,8 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     result=study_results, zipName=paste0(base_name,"_",stem,"_",i,"_Vacc"),
     outputFolder=output_ip) 
     }
-    }
+  }
+  }
   }
   
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
@@ -250,6 +252,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
   }
   message("- Vaccination strata")
   # Vaccination strata
+  if(vaccine_data) {
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
     cdm = cdm,
     strataTable = VaccCohortsName,
@@ -297,6 +300,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_NonVacc"), 
     outputFolder=output_ip) 
+  }
   }
   }
   }

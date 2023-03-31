@@ -59,6 +59,17 @@ addAge <- function(x, cdm, ageAt = "cohort_start_date", defaultMonth = 1, defaul
   return(person)
 }
 
+sqlGetAge <- function(dialect, dob, dateOfInterest) {
+  SqlRender::translate(
+    SqlRender::render("((YEAR(@date_of_interest) * 10000 + MONTH(@date_of_interest) * 100 +
+                      DAY(@date_of_interest)-(YEAR(@dob)* 10000 + MONTH(@dob) * 100 + DAY(@dob))) / 10000)",
+                      dob = dob,
+                      date_of_interest = dateOfInterest
+    ),
+    targetDialect = dialect
+  )
+}
+
 addPriorHistory <- function(x, cdm, priorHistoryAt = "cohort_start_date", compute = TRUE) {
   x <- cdm[["observation_period"]] %>%
     dplyr::select(

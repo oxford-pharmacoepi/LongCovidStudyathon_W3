@@ -24,6 +24,9 @@ library(MatchIt)
 library(purrr)
 library(ggplot2)
 library(IncidencePrevalence)
+library(lubridate)
+library(tibble)
+library(reshape2)
 library(readr)
 
 # install the following packages like this, with remotes 
@@ -37,10 +40,6 @@ library(CirceR)
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
-
-# Name of the output folder to save the results. Change to "output" or any other
-# desired path
-output.folder <- here("Results",db.name)
 
 # Stem to use for the cohort tables in the database
 table_stem <- "..."

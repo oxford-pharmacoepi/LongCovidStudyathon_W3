@@ -263,7 +263,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     distinct() %>%
     compute()
   if(first == TRUE) {
-    computeQuery(overlap, name = overlapTableName, temporary = FALSE,
+    computeQuery(overlap, name = overlapTableName, temporary = FALSE, overwrite = TRUE,
                     schema = results_database_schema)
   } else {
     appendPermanent(overlap, name = overlapTableName,

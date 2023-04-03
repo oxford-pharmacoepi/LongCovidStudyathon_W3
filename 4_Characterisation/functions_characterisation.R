@@ -27,14 +27,12 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
   
   write_csv(
     vacc_counts,
-    file = here::here(output_lsc, paste0("Vaccination_doses_",stem_name,".csv")),
-    row.names = FALSE
+    file = here::here(output_lsc, paste0("Vaccination_doses_",stem_name,".csv"))
   )
   write_csv(
     vacc_lastdose,
-    file = here::here(output_lsc, paste0("Vaccination_last_dose_",stem_name,".csv")),
-    row.names = FALSE
-  )
+    file = here::here(output_lsc, paste0("Vaccination_last_dose_",stem_name,".csv"))
+    )
 }
 
 do_lsc <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {

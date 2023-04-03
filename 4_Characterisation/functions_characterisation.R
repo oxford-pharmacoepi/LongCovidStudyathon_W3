@@ -37,7 +37,7 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
   )
 }
 
-do_lsc <- function(cohort_ids_interest, stem_name, tableName) {
+do_lsc <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
   charac <- getLargeScaleCharacteristics(
     cdm, targetCohortName = tableName, 
     targetCohortId = cohort_ids_interest,

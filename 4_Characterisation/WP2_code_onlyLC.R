@@ -63,8 +63,8 @@ if(doCharacterisation) {
   
   info(logger, '--- Looking at baseline characterisation')
   # Large scale characterisation
-  do_lsc(c(1:30), "all_base", BaseCohortsName)
-  do_lsc(c(1:60), "all_any", OverlapCohortsCName)
+  do_lsc(c(1:30), "all_base", BaseCohortsName, any = FALSE)
+  do_lsc(c(1:60), "all_any", OverlapCohortsCName, any = FALSE)
   
   info(logger, '--- Looking at vaccination outcomes for characterisation')
   # Vaccination

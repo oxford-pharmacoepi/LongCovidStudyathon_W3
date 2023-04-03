@@ -71,7 +71,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
       repeatedEvents = FALSE, completeDatabaseIntervals = FALSE, minCellCount = 5)
     
     study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-      cdm=cdm, resultList=list(inc), databaseName = db.name)
+      cdm=cdm, resultList=list(inc))
     
     IncidencePrevalence::exportIncidencePrevalenceResults(
       result=study_results, zipName=paste0(base_name,"_",stem,"_",i,"_AllandSex"),
@@ -100,7 +100,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0(base_name,"_",stem,"_",i,"_Age"),
     outputFolder=output_ip) 
@@ -138,7 +138,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0(base_name,"_",stem,"_",i,"_Vacc"),
     outputFolder=output_ip) 
@@ -165,7 +165,7 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0(base_name,"_",stem,"_",i,"_NonVacc"),
     outputFolder=output_ip) 
@@ -216,7 +216,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_AllandSex"), 
     outputFolder=output_ip) 
@@ -243,7 +243,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_Age"), 
     outputFolder=output_ip) 
@@ -271,7 +271,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
     completeDatabaseIntervals = FALSE, minCellCount = 5) 
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_Vacc"), 
     outputFolder=output_ip) 
@@ -296,7 +296,7 @@ calculate_IP_allpop <- function(outcome_id, date_to_consider, date_to_end, table
     completeDatabaseIntervals = FALSE, minCellCount = 5)
 
   study_results <- IncidencePrevalence::gatherIncidencePrevalenceResults(
-    cdm=cdm, resultList=list(inc), databaseName = db.name)
+    cdm=cdm, resultList=list(inc))
   IncidencePrevalence::exportIncidencePrevalenceResults(
     result=study_results, zipName=paste0("Allpop_",stem,"_",i,"_NonVacc"), 
     outputFolder=output_ip) 

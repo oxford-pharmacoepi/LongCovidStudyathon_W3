@@ -5,28 +5,52 @@
 source(here::here("4_Characterisation","functions_characterisation.R"))
 
 
-if((doCharacterisation || doClustering) && doTrajectories) {
+
+if ((doCharacterisation || doClustering) && doTrajectories && vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      HUCohortsName, TrajCohortsName))
-} else if ((doCharacterisation || doClustering) && !doTrajectories) {
+} else if ((doCharacterisation || doClustering) && doTrajectories && !vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName, TrajCohortsName))
+} else if ((doCharacterisation || doClustering) && !doTrajectories && vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      HUCohortsName))
-} else if (!(doCharacterisation || doClustering) && doTrajectories) {
+} else if ((doCharacterisation || doClustering) && !doTrajectories && !vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     HUCohortsName))
+} else if (!(doCharacterisation || doClustering) && doTrajectories && vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName,
                                      TrajCohortsName))
-} else if (!(doCharacterisation || doClustering) && !doTrajectories) {
+} else if (!(doCharacterisation || doClustering) && doTrajectories && !vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName,
+                                     TrajCohortsName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories && vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName,
+                                     OverlapCohortsCName,OverlapCohortsIPName))
+} else if (!(doCharacterisation || doClustering) && !doTrajectories && !vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName))
 }
 

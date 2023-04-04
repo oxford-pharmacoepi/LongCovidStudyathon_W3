@@ -25,11 +25,11 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
                      .groups = 'drop') %>%
     compute()
   
-  write_csv(
+  write.csv(
     vacc_counts,
     file = here::here(output_lsc, paste0("Vaccination_doses_",stem_name,".csv"))
   )
-  write_csv(
+  write.csv(
     vacc_lastdose,
     file = here::here(output_lsc, paste0("Vaccination_last_dose_",stem_name,".csv"))
     )
@@ -51,16 +51,16 @@ do_lsc <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
       dplyr::filter(cohort_definition_id %in% c(1:8, 13:28, 37:100, 133:148, 157:172))
     charac_PASC <- charac %>%
       dplyr::filter(cohort_definition_id %in% c(9:12, 29:36, 101:132, 149:156, 173:180))
-    write_csv(
+    write.csv(
       charac_LC,
       file = here::here(output_lsc, paste0("Characterisation_",stem_name,"_LC.csv"))
     )
-    write_csv(
+    write.csv(
       charac_PASC,
       file = here::here(output_lsc, paste0("Characterisation_",stem_name,"_PASC.csv"))
     )
   } else {
-    write_csv(
+    write.csv(
       charac,
       file = here::here(output_lsc, paste0("Characterisation_",stem_name,".csv"))
     )
@@ -83,16 +83,16 @@ do_du <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
       dplyr::filter(cohort_definition_id %in% c(1:8, 13:28, 37:100, 133:148, 157:172))
     charac_PASC <- charac %>%
       dplyr::filter(cohort_definition_id %in% c(9:12, 29:36, 101:132, 149:156, 173:180))
-    write_csv(
+    write.csv(
       charac_LC,
       file = here::here(output_du, paste0("DrugUtilisation_",stem_name,"_LC.csv"))
     )
-    write_csv(
+    write.csv(
       charac_PASC,
       file = here::here(output_du, paste0("DrugUtilisation_",stem_name,"_PASC.csv"))
     )
   } else {
-    write_csv(
+    write.csv(
       charac,
       file = here::here(output_du, paste0("DrugUtilisation_",stem_name,".csv"))
     )
@@ -130,7 +130,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
     dplyr::arrange(cohort_definition_id) %>%
     compute()
   
-  write_csv(
+  write.csv(
     HU_summary,
     file = here::here(output_lsc, paste0("Healthcare_Utilisation_noHosp_",stem_name,".csv"))
   )
@@ -165,7 +165,7 @@ do_hu <- function(cohort_ids_interest, stem_name, tableName) {
     HU_summary_final <- HU_summary
   }
   
-  write_csv(
+  write.csv(
     HU_summary_final,
     file = here::here(output_lsc, paste0("Healthcare_Utilisation_",stem_name,".csv"))
   )
@@ -198,7 +198,7 @@ do_tp <- function(cohort_base_id, tp_ids, tableName) {
       cohortType = c("target",rep("event",32)))
     
     # Create settings first (the folder)
-    write_csv(file = here(output_tp,"settings","cohorts_to_create.csv"),cohortscreate)
+    write.csv(file = here(output_tp,"settings","cohorts_to_create.csv"),cohortscreate)
     
   cohortSettings <- createCohortSettings(
     targetCohorts = targetCohort,

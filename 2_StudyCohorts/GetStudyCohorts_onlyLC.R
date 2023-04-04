@@ -150,7 +150,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         cohort_start_date = min(vacc_date, na.rm = TRUE)
       ) %>% dplyr::mutate(cohort_definition_id = 1) %>%
       left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date, .eath_date))) %>%
+      dplyr::mutate(cohort_end_date = lubridate::as_date(pmin(observation_period_end_date, .data$death_date))) %>%
       dplyr::mutate(cohort_start_date = .data$cohort_start_date + lubridate::days(14)) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
@@ -419,7 +419,7 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "Reinf_age_(0,2)" , "Reinf_age_(3,5)", 
                                                           "Reinf_age_(6,9)", "Reinf_age_(10,13)",
                                                           "Reinf_age_(14,17)", "Reinf_age_(18,40)",
-                                                          "Reinf_age_(41,64)", "Reinf_age_(65,120)",
+                                                          "Reinf_age_(41,64)", "Reinf_age_(65,120)"
                                                           )))
 
 names_final_cohorts <- rbind(names_final_cohorts,
@@ -440,7 +440,7 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "Reinf_LC_code_age_(0,2)" , "Reinf_LC_code_age_(3,5)", 
                                                           "Reinf_LC_code_age_(6,9)", "Reinf_LC_code_age_(10,13)",
                                                           "Reinf_LC_code_age_(14,17)", "Reinf_LC_code_age_(18,40)",
-                                                          "Reinf_LC_code_age_(41,64)", "Reinf_LC_code_age_(65,120)",
+                                                          "Reinf_LC_code_age_(41,64)", "Reinf_LC_code_age_(65,120)"
                                                          )))
 
 

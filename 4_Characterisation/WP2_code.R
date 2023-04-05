@@ -99,10 +99,12 @@ if(doCharacterisation) {
   do_lsc(cohorts_interest_base, "all_base", BaseCohortsName)
   do_lsc(cohorts_interest_any, "all_any", OverlapCohortsCName)
   
+  if(vaccine_data) {
   info(logger, '--- Looking at vaccination outcomes for characterisation')
   # Vaccination
   do_vaccination_characterisation(cohorts_interest_base, "all_base", BaseCohortsName)
   do_vaccination_characterisation(cohorts_interest_any, "all_any", OverlapCohortsCName)
+  }
   
   info(logger, '--- Looking at healthcare utilisation outcomes for characterisation')
   # Healthcare Utilisation

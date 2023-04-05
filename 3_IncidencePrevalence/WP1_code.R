@@ -169,7 +169,6 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     }
   }
   }
-  }
   
   cdm$denominator <- IncidencePrevalence::generateDenominatorCohortSet(
     cdm =  cdm,
@@ -195,7 +194,8 @@ calculate_IP <- function(base_id, outcome_id, tableBase, tableOutcome, stem) {
     outputFolder=output_ip) 
    }
  }
-}
+  }
+  }
 }
 
 base_cohorts_id <- c(1:4)

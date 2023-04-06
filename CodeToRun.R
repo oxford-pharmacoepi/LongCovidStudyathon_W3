@@ -119,6 +119,9 @@ onlyLC <- FALSE
 # If you have some problems with dates in initial cohorts
 instantiate_diff <- FALSE
 
+# If your database engine is SQL Server
+sql_server <- FALSE
+
 # Run the study
 source(here("RunStudy.R"))
 

@@ -63,7 +63,8 @@ if(getStudyCohorts) {
   info(logger, 'GETTING STUDY COHORTS')
   if(onlyLC) {
     source(here("2_StudyCohorts","GetStudyCohorts_onlyLC.R"), local = TRUE)
-    
+  } else if(sql_server) {
+    source(here("2_StudyCohorts","GetStudyCohorts_sql.R"), local = TRUE)
   } else {
     source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
   }
@@ -86,6 +87,8 @@ if(doCharacterisation || doDrugUtilisation || doTreatmentPatterns) {
   info(logger, 'DOING LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
   if(onlyLC) {
     source(here("4_Characterisation","WP2_code_onlyLC.R"), local = TRUE)
+  } else if(sql_server) {
+    source(here("4_Characterisation","WP2_code_sql.R"), local = TRUE)
   } else {
     source(here("4_Characterisation","WP2_code.R"), local = TRUE)
   }
@@ -95,7 +98,11 @@ if(doCharacterisation || doDrugUtilisation || doTreatmentPatterns) {
 # Objective 3a: Clustering
 if(doClustering) {
   info(logger, 'PERFORMING LCA CLUSTERING AND NETWORK ANALYSIS')
-  source(here("5_Clustering","WP3_code.R"), local = TRUE)
+  if(sql_server) {
+    source(here("5_Clustering","WP3_code_sql.R"), local = TRUE)
+  } else {
+    source(here("5_Clustering","WP3_code.R"), local = TRUE)
+  }
   info(logger, 'FINISHED LCA CLUSTERING AND NETWORK ANALYSIS')
 }
 

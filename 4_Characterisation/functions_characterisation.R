@@ -11,7 +11,7 @@ do_vaccination_characterisation <- function(cohort_ids_interest, stem_name, tabl
   
   cohorts_interest <- cohorts_interest %>% 
     dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
-    dplyr::mutate(last_dose_days = CDMConnector::datediff("last_dose","cohort_start_date")) %>%
+    dplyr::mutate(last_dose_days = !!CDMConnector::datediff("last_dose","cohort_start_date")) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date,dose,last_dose_days) %>% 
     compute()
   

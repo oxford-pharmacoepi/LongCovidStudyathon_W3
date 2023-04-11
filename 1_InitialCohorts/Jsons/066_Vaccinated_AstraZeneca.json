@@ -19,6 +19,22 @@
               "VOCABULARY_ID": "CVX"
             },
             "includeDescendants": true
+          },
+          {
+            "concept": {
+              "CONCEPT_CLASS_ID": "Ingredient",
+              "CONCEPT_CODE": "2479831",
+              "CONCEPT_ID": 739902,
+              "CONCEPT_NAME": "SARS-COV-2 (COVID-19) vaccine, vector non-replicating",
+              "DOMAIN_ID": "Drug",
+              "INVALID_REASON": "V",
+              "INVALID_REASON_CAPTION": "Valid",
+              "STANDARD_CONCEPT": "S",
+              "STANDARD_CONCEPT_CAPTION": "Standard",
+              "VOCABULARY_ID": "RxNorm",
+              "VALID_START_DATE": "2021-04-05",
+              "VALID_END_DATE": "2099-12-31"
+            }
           }
         ]
       }

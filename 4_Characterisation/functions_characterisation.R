@@ -215,11 +215,20 @@ do_tp <- function(cohort_base_id, tp_ids, tableName) {
   saveSettings <- createSaveSettings(databaseName = db.name,
                                                         rootFolder = here(),
                                                         outputFolder = here(output_tp))
-  constructPathways(
-    dataSettings = dataSettings,
-    pathwaySettings = pathwaySettings,
-    saveSettings = saveSettings,
-    tableName = tableName)
+  
+  if(sql_server) {
+    constructPathways_sql(
+      dataSettings = dataSettings,
+      pathwaySettings = pathwaySettings,
+      saveSettings = saveSettings,
+      tableName = tableName)
+  } else {
+    constructPathways(
+      dataSettings = dataSettings,
+      pathwaySettings = pathwaySettings,
+      saveSettings = saveSettings,
+      tableName = tableName)
+  }
   
   generateOutput(saveSettings = saveSettings)
 }

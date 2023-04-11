@@ -85,13 +85,15 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
       compute()
     
-    cohort <- cohort %>% dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(
-      .data$observation_period_end_date, 
-      .data$death_date, 
-      .data$event, 
-      .data$one_year_date,
-      .data$end_covid_testing_date,
-      na.rm = F))) %>%
+    cohort <- cohort %>% 
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$death_date)) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+        dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+          !(is.na(.data$event)) & .data$cohort_end_date > .data$event, .data$event, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$end_covid_testing_date)) & .data$cohort_end_date > .data$end_covid_testing_date, .data$end_covid_testing_date, .data$cohort_end_date))) %>%
       dplyr::mutate(follow_up_days = .data$cohort_end_date - .data$cohort_start_date) %>% 
       dplyr::mutate(reason_censoring = ifelse(
         !(is.na(event)) &
@@ -112,13 +114,15 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
       dplyr::mutate(end_influenza_date =  as.Date("2019-12-31")) %>% # before Covid-19 pandemic
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
       compute()
-    cohort <- cohort %>% dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(
-      .data$observation_period_end_date, 
-      .data$death_date, 
-      .data$event, 
-      .data$one_year_date,
-      .data$end_influenza_date,
-      na.rm = F))) %>%
+    cohort <- cohort %>% 
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$death_date)) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$event)) & .data$cohort_end_date > .data$event, .data$event, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$end_influenza_date)) & .data$cohort_end_date > .data$end_influenza_date, .data$end_influenza_date, .data$cohort_end_date))) %>%
       dplyr::mutate(follow_up_days = cohort_end_date - .data$cohort_start_date) %>% 
       dplyr::mutate(reason_censoring = ifelse(
         !(is.na(.data$event)) &
@@ -136,12 +140,13 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
       dplyr::mutate(end_covid_testing_date =  as.Date(.env$covid_end_date)) %>% # asked in the CodeToRun file
       left_join(observation_death, by = c("subject_id")) %>%
       compute()
-    cohort <- cohort %>% dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(
-      .data$observation_period_end_date, 
-      .data$death_date, 
-      .data$one_year_date,
-      .data$end_covid_testing_date,
-      na.rm = F))) %>%
+    cohort <- cohort %>% 
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$death_date)) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$end_covid_testing_date)) & .data$cohort_end_date > .data$end_covid_testing_date, .data$end_covid_testing_date, .data$cohort_end_date))) %>%
       dplyr::mutate(follow_up_days = cohort_end_date - .data$cohort_start_date) %>% 
       dplyr::mutate(reason_censoring = ifelse(!(is.na(.data$death_date)) & cohort_end_date == .data$death_date, "death",
                                               ifelse(cohort_end_date == .data$one_year_date, "one year of follow_up",
@@ -424,8 +429,8 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     }
     
     current <- current %>% dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(
-        .data$observation_period_end_date, .data$death_date))) %>% compute()
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+    compute()
 
     if(end_outcome) {
       current <- current %>% dplyr::mutate(cohort_end_date = .data$cohort_start_date) %>%
@@ -502,7 +507,7 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
                 dplyr::select(subject_id, "vacc_end_date" = "cohort_end_date"),
               by = "subject_id") %>%
     dplyr::filter(vacc_end_date > cohort_start_date) %>%
-    dplyr::mutate(cohort_end_date = pmin(cohort_end_date,vacc_end_date)) %>%
+    dplyr::mutate(cohort_end_date = ifelse(!is.na(vacc_date) & cohort_end_date > vacc_end_date, vacc_date, cohort_end_date)) %>%
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()

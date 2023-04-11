@@ -4,6 +4,11 @@
 
 # Think how to group better later on
 
+# Output folder for WP1
+output_ip <- file.path(tempDir,"IP")
+if (!file.exists(output_ip)){
+  dir.create(output_ip, recursive = TRUE)}
+
 # Output folder for plots
 output_plots <- file.path(tempDir,"Plots_IP")
 if (!file.exists(output_plots)){

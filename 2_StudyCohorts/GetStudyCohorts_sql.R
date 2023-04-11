@@ -242,7 +242,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         cohort_start_date = min(vacc_date, na.rm = TRUE)
       ) %>% dplyr::mutate(cohort_definition_id = 1) %>%
       left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::mutate(cohort_start_date = !!CDMConnector::dateadd("cohort_start_date", 14)) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
@@ -252,7 +252,8 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::left_join(vaccinated %>% dplyr::select("vacc_date" = "cohort_start_date","subject_id"),
                 by = "subject_id") %>% dplyr::mutate(cohort_definition_id = 2) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date, .data$vacc_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(vacc_date) & .data$cohort_end_date > .data$vacc_date, .data$vacc_date, .data$cohort_end_date))) %>%
       dplyr::left_join(cdm$observation_period %>% 
                   dplyr::select("cohort_start_date" = "observation_period_start_date","person_id"),
                 by = c("subject_id" = "person_id")) %>%
@@ -261,17 +262,17 @@ if(vaccine_data && db.name != "CPRDGold") {
     
     vaccinated_first <- vaccinated_first %>% dplyr::mutate(cohort_definition_id = 3) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     vaccinated_second <- vaccinated_second %>% dplyr::mutate(cohort_definition_id = 4) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     vaccinated_third <- vaccinated_third %>% dplyr::mutate(cohort_definition_id = 5) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     
@@ -313,7 +314,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         cohort_start_date = min(vacc_date, na.rm = TRUE)
       ) %>% dplyr::mutate(cohort_definition_id = 1) %>%
       left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::mutate(cohort_start_date = !!CDMConnector::dateadd("cohort_start_date", 14)) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
@@ -323,7 +324,8 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::left_join(vaccinated %>% dplyr::select("vacc_date" = "cohort_start_date","subject_id"),
                        by = "subject_id") %>% dplyr::mutate(cohort_definition_id = 2) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date, .data$vacc_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(vacc_date) & .data$cohort_end_date > .data$vacc_date, .data$vacc_date, .data$cohort_end_date))) %>%
       dplyr::left_join(cdm$observation_period %>% 
                          dplyr::select("cohort_start_date" = "observation_period_start_date","person_id"),
                        by = c("subject_id" = "person_id")) %>%
@@ -332,17 +334,17 @@ if(vaccine_data && db.name != "CPRDGold") {
     
     vaccinated_first <- vaccinated_first %>% dplyr::mutate(cohort_definition_id = 3) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     vaccinated_second <- vaccinated_second %>% dplyr::mutate(cohort_definition_id = 4) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     vaccinated_third <- vaccinated_third %>% dplyr::mutate(cohort_definition_id = 5) %>%
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
-      mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     
@@ -392,7 +394,7 @@ if(vaccine_data && db.name != "CPRDGold") {
       cohort_start_date = min(vacc_date, na.rm = TRUE)
     ) %>% dplyr::mutate(cohort_definition_id = 1) %>%
     left_join(observation_death, by = c("subject_id"), copy = TRUE) %>%
-    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date,.data$death_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
     dplyr::filter(!is.na(cohort_end_date)) %>%
     dplyr::mutate(cohort_start_date = !!CDMConnector::dateadd("cohort_start_date", 14)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
@@ -403,7 +405,8 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::left_join(vaccinated %>% dplyr::select("vacc_date" = "cohort_start_date","subject_id"),
               by = "subject_id") %>% dplyr::mutate(cohort_definition_id = 2) %>%
     dplyr::left_join(observation_death, by = c("subject_id")) %>%
-    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(.data$observation_period_end_date, .data$death_date, .data$vacc_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(vacc_date) & .data$cohort_end_date > .data$vacc_date, .data$vacc_date, .data$cohort_end_date))) %>%
     left_join(cdm$observation_period %>% 
                 dplyr::select("cohort_start_date" = "observation_period_start_date","person_id"),
               by = c("subject_id" = "person_id")) %>%
@@ -412,19 +415,19 @@ if(vaccine_data && db.name != "CPRDGold") {
   
   vaccinated_first <- vaccinated_first %>% dplyr::mutate(cohort_definition_id = 3) %>%
     left_join(observation_death, by = c("subject_id")) %>%
-    mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
     dplyr::filter(!is.na(.data$cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   vaccinated_second <- vaccinated_second %>% mutate(cohort_definition_id = 4) %>%
     left_join(observation_death, by = c("subject_id")) %>%
-    mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
     dplyr::filter(!is.na(.data$cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   vaccinated_third <- vaccinated_third %>% mutate(cohort_definition_id = 5) %>%
     left_join(observation_death, by = c("subject_id")) %>%
-    mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date,death_date))) %>%
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
     dplyr::filter(!is.na(.data$cohort_end_date)) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
@@ -852,8 +855,8 @@ if(doCharacterisation || doClustering) {
                                          overwrite = TRUE)
   cdm[[HUCohortsName]] <- cdm[[HUCohortsName]] %>% left_join(observation_death, 
                                                                by = c("subject_id")) %>%
-  dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(pmin(observation_period_end_date, death_date))) %>% 
-  compute()
+    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
+    compute()
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = HUCohortsName,
                                              cohort_definition_id = c(1:4),

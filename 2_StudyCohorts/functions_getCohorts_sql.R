@@ -123,7 +123,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
         !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$end_influenza_date)) & .data$cohort_end_date > .data$end_influenza_date, .data$end_influenza_date, .data$cohort_end_date))) %>%
-      dplyr::mutate(follow_up_days = cohort_end_date - .data$cohort_start_date) %>% 
+      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_end_date", "cohort_start_date")) %>% 
       dplyr::mutate(reason_censoring = ifelse(
         !(is.na(.data$event)) &
           cohort_end_date == .data$event, "COVID-19",

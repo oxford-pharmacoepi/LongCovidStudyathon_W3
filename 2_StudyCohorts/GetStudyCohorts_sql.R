@@ -221,7 +221,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         "cohort_start_date",
         "cohort_end_date",
         "cohort_definition_id"
-      ) %>% dplyr::group_by(subject_id) %>% dplyr::arrange(.data$cohort_start_date) %>%
+      ) %>% dplyr::group_by(subject_id) %>% dbplyr::window_order(.data$cohort_start_date) %>%
       dplyr::mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
     # Only one and more than one dose
     vaccinated_multiple <- vaccinated %>%
@@ -295,7 +295,7 @@ if(vaccine_data && db.name != "CPRDGold") {
         "cohort_start_date",
         "cohort_end_date",
         "cohort_definition_id"
-      ) %>% dplyr::group_by(subject_id) %>% dplyr::arrange(.data$cohort_start_date) %>%
+      ) %>% dplyr::group_by(subject_id) %>% dbplyr::window_order(.data$cohort_start_date) %>%
       dplyr::mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
     # Only one and more than one dose
     vaccinated_multiple <- vaccinated %>%
@@ -371,7 +371,7 @@ if(vaccine_data && db.name != "CPRDGold") {
       "cohort_start_date",
       "cohort_end_date",
       "cohort_definition_id"
-    ) %>% dplyr::group_by(subject_id) %>% arrange(.data$cohort_start_date) %>%
+    ) %>% dplyr::group_by(subject_id) %>% dbplyr::window_order(.data$cohort_start_date) %>%
     dplyr::filter(!is.na(cohort_start_date)) %>%
     dplyr::mutate(seq = row_number()) %>% distinct() %>% ungroup() %>% compute()
   # Only one and more than one dose

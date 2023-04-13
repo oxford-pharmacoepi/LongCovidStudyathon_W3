@@ -15,21 +15,27 @@ if (!file.exists(output_plots)){
   dir.create(output_plots, recursive = TRUE)}
 
 # Names of bases and groups of outcomes for WP1a
-base_names <- c("Inf", "Reinf", "Neg", "Flu")
-outcome_names <- c("LC", "PASC", "MC")
+base_names_before <- c("Inf", "Reinf", "Neg", "Flu")
+outcome_names_before <- c("LC", "PASC", "MC")
 
 # All files in the IP output folder
 IP_file_names <- list.files(path = here::here(output_ip))
 IP_file_names_full <- list.files(path = here::here(output_ip), full.names = TRUE)
 
+base_names <- c(0)
+outcome_names <- c(0)
+
 # Erase base_names and outcome_names that do not appear in file_names
-for(name in length(base_names)) {
-  if(length(grep(base_names[name],IP_file_names)) == 0) base_names <- base_names[-name]
+for(name in base_names_before) {
+  if(length(grep(name,IP_file_names)) != 0) base_names <- c(base_names, name)
 }
 
-for(name in length(outcome_names)) {
-  if(length(grep(outcome_names[name],IP_file_names)) == 0) outcome_names <- outcome_names[-name]
+for(name in outcome_names_before) {
+  if(length(grep(name,IP_file_names)) != 0) outcome_names <- c(outcome_names, name)
 }
+
+base_names <- base_names[-1]
+outcome_names <- outcome_names[-1]
 
 ################################################################################
 # Start plot making
@@ -197,8 +203,6 @@ for(b in base_names) {
       
     }
 }
-
-# Here I am with the tidyig up!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Incidence: whole population, sex strata
 working_names <- list()

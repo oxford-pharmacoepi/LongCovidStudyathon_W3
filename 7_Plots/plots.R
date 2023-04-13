@@ -22,6 +22,15 @@ outcome_names <- c("LC", "PASC", "MC")
 IP_file_names <- list.files(path = here::here(output_ip))
 IP_file_names_full <- list.files(path = here::here(output_ip), full.names = TRUE)
 
+# Erase base_names and outcome_names that do not appear in file_names
+for(name in length(base_names)) {
+  if(length(grep(base_names[name],IP_file_names)) == 0) base_names <- base_names[-name]
+}
+
+for(name in length(outcome_names)) {
+  if(length(grep(outcome_names[name],IP_file_names)) == 0) outcome_names <- outcome_names[-name]
+}
+
 ################################################################################
 # Start plot making
 

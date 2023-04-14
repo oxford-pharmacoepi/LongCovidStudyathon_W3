@@ -2,7 +2,7 @@
 # Only for base cohorts and for LC any / LC code / PASC any in overlap
 
 # get functions used throughout this script
-source(here::here("4_Characterisation","functions_characterisation.R"))
+source(here::here("4_Characterisation","functions_characterisation_sql.R"))
 
 
 

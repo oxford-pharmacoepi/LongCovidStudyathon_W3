@@ -51,7 +51,7 @@ working_names[[3]] <- setdiff(working_names[[3]],working_names[[2]])
 name_plot <- c("Allpop_base", "Allpop_overlap_any", "Allpop_overlap")
 
 for(i in c(1:3)) {
-  name_file_inc <- list.files(path = here::here(output_ip, working_names[[i]][1]), pattern = "incidence_estimates")
+  #name_file_inc <- list.files(path = here::here(output_ip, working_names[[i]][1]), pattern = "incidence_estimates")
   unzip(working_names[[i]][1], exdir = output_plots)
   file_inc <- list.files(path = here::here(output_plots, substr(basename(working_names[[i]][1]), 1, nchar(basename(working_names[[i]][1])) - 4)), pattern = "incidence_es*", full.names = TRUE)
   df <- read.csv(file_inc)

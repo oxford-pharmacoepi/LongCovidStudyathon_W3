@@ -366,7 +366,6 @@ HU_summary <- cohort_LC %>%
   dplyr::mutate(time_ecmo = !!CDMConnector::datediff("last_ecmo", "cohort_start_date")) %>%
   dplyr::select(dplyr::starts_with(c("number","time"))) %>%
   dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
-  dplyr::arrange(cluster_assignment) %>%
   compute()
 
 write.csv(
@@ -393,7 +392,6 @@ if(sum(cohort_LC %>% dplyr::select(number_visit) %>% dplyr::pull()) == 0) {
     mutate(time_visit = !!CDMConnector::datediff("last_hosp", "cohort_start_date")) %>%
     dplyr::select(dplyr::starts_with(c("number","time"))) %>%
     dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
-    dplyr::arrange(cluster_assignment) %>%
     compute()
   HU_summary_final <- HU_summary %>% dplyr::left_join(HU_hosp_summary, by = "cluster_assignment")
 } else {

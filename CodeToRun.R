@@ -41,6 +41,10 @@ library(CirceR)
 # Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
 db.name <- "..."
 
+# Name of the output folder to save the results. Change to "output" or any other
+# desired path
+output.folder <- here::here()
+
 # Stem to use for the cohort tables in the database
 table_stem <- "..."
 

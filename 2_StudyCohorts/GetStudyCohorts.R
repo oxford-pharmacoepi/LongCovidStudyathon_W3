@@ -960,3 +960,15 @@ write_csv(names_final_cohorts,
                            paste0(db.name,"_cohorts.csv")
           )
 )
+
+
+## EXTRA COHORT: Infection + Any LC symptom with index date at symptom event
+# With more?
+do_overlap_LCany(cdm, c(1), c(5:29), c(210), indexsymptom = TRUE)
+
+
+#names_final_cohorts <- rbind(names_final_cohorts,
+#                             dplyr::tibble(table_name = OverlapCohortsName,
+#                                           cohort_definition_id = 210, cohort_name = "Any LC symptom index date symptom"))
+
+do_du(210, "any_extra", OverlapCohortsCName, any = FALSE)

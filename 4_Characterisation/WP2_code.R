@@ -96,7 +96,7 @@ if(doCharacterisation) {
   
   info(logger, '--- Looking at baseline characterisation')
   # Large scale characterisation
-  do_lsc(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_lsc(cohorts_interest_base, "all_base", BaseCohortsName, any = FALSE)
   do_lsc(cohorts_interest_any, "all_any", OverlapCohortsCName)
   
   if(vaccine_data) {
@@ -127,7 +127,7 @@ if(doDrugUtilisation) {
     dplyr::filter(lubridate::year(.data$drug_exposure_start_date) >= 2016) %>%
     dplyr::compute()
   
-  do_du(cohorts_interest_base, "all_base", BaseCohortsName)
+  do_du(cohorts_interest_base, "all_base", BaseCohortsName, any = FALSE)
   do_du(cohorts_interest_any, "all_any", OverlapCohortsCName)
 }
 

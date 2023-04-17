@@ -272,7 +272,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
   
 }
 
-do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_cohort_id) {
+do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_cohort_id, indexsymptom = FALSE) {
   # We build this cohort from the beginning, i.e. getting the initial instantiated symptom cohorts
   # and enforcing washout for each symptom with itself. Then we join all of them together
   # message("outcome ", 5)
@@ -364,10 +364,16 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
                                      %>% dplyr::pull(), reason = paste0("Only first event overlap base ", j)))
     
     # We are only asking for the first outcome event in the window of interest, per each index base event
-    
-    overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
-      distinct() %>%
-      compute()
+    if(indexsymptom) {
+      overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
+        distinct() %>%
+        dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%
+        compute()
+    } else {
+      overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
+        distinct() %>%
+        compute()
+    }
     if(j == 1) {
       computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
@@ -377,10 +383,17 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
     }
 
   }
-  write_csv(
-    attrition,
-    file = here::here(output_at, paste0("attrition_overlap_LCany.csv"))
-  )
+  if(indexsymptom) {
+    write_csv(
+      attrition,
+      file = here::here(output_at, paste0("attrition_overlap_LCany_indexsymptom.csv"))
+    )
+  } else {
+    write_csv(
+      attrition,
+      file = here::here(output_at, paste0("attrition_overlap_LCany.csv"))
+    )
+  }
 }
 
 create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE, end_outcome = TRUE, new_ids, tableName) {

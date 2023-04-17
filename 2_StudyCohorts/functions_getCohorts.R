@@ -369,17 +369,19 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
         distinct() %>%
         dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%
         compute()
+      computeQuery(overlap, name = Extrav2CohortsName, temporary = FALSE,
+                   schema = results_database_schema, overwrite = TRUE)
     } else {
       overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
         distinct() %>%
         compute()
-    }
     if(j == 1) {
       computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
     } else {
       appendPermanent(overlap, name = OverlapCohortsCName,
                    schema = results_database_schema)
+    }
     }
 
   }

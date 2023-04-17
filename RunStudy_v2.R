@@ -27,24 +27,25 @@ OverlapCohortsIPName <- paste0(table_stem,"_overlapipcohorts")
 HUCohortsName <- paste0(table_stem,"_hucohorts")
 TrajCohortsName <- paste0(table_stem,"_trajcohort")
 VaccCohortsName <- paste0(table_stem,"_vacccohorts")
+Extrav2CohortsName <- paste0(table_stem,"_extrav2cohorts")
 
 # Create vector with all names
 CohortNames <- c(InitialCohortsName, BaseCohortsName, LongCovidCohortsName,
                  PascCohortsName, MedCondCohortsName, OverlapCohortsCName,
                  OverlapCohortsIPName, HUCohortsName, TrajCohortsName,
-                 VaccCohortsName)
+                 VaccCohortsName, Extrav2CohortsName)
 
 # get functions used throughout this study
 source(here::here("functions.R"))
 
 # Read initial cohorts
-  info(logger, 'INITIAL COHORTS ALREADY INSTANTIATED')
   Initial_cohorts <- CDMConnector::readCohortSet(
     here::here("1_InitialCohorts", "Jsons")) %>%
     dplyr::mutate(cohort_name = substr(cohort_name, 5, nchar(cohort_name)))
   cdm <- cdmFromCon(
     db, cdm_database_schema, writeSchema = results_database_schema,
     cohortTables = InitialCohortsName)
+  info(logger, 'COHORTS READ')
 
 # Do extra characterisation analyses
   source(here::here("8_Extra", "extraAnalyses_v2.R"))

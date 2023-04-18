@@ -153,7 +153,7 @@ if(sql_server) {
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName,
                                    LongCovidCohortsName, PascCohortsName,
-                                   OverlapCohortsCName, Extrav2CohortsName))
+                                   OverlapCohortsCName))
 
 # EXTRA COHORT: Infection + Any LC symptom with index date at symptom event
 info(logger, 'STARTING TO GET EXTRA COHORTS')

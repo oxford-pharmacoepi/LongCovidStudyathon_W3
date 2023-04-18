@@ -372,14 +372,14 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
                                      %>% dplyr::pull(), reason = paste0("Only first event overlap base ", j)))
     
     # We are only asking for the first outcome event in the window of interest, per each index base event
-    if(indexsymptom && first) {
+    if(indexsymptom && (j ==1)) {
       overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
         distinct() %>%
         dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%
         compute()
       computeQuery(overlap, name = Extrav2CohortsName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
-    } else if (indexsymptom && !first) {
+    } else if (indexsymptom && (j != 1)) {
       overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
         distinct() %>%
         dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%

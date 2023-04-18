@@ -3,6 +3,11 @@
                     cohortTables = c(InitialCohortsName,BaseCohortsName,
                                      OverlapCohortsCName,OverlapCohortsIPName))
   
+  # Output folder for Attrition
+  output_at <- file.path(tempDir,"Attrition")
+  if (!file.exists(output_at)){
+    dir.create(output_at, recursive = TRUE)}
+  
 ################################################################################
 # Clustering with 4 classes everywhere
   

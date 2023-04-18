@@ -94,7 +94,7 @@
   f <- with(mydata, as.formula(sprintf("%s ~ %s", cols, paste(x_vars, collapse = " + "))))
   
 lc <- poLCA(f, mydata, nclass=4, maxiter=2000, graphs = TRUE, tol=1e-5, na.rm=FALSE,  
-nrep=2, verbose=TRUE, calc.se=TRUE)
+nrep=100, verbose=TRUE, calc.se=TRUE)
  	
 for(i in 1:(length(lc)-1)) {
   write.csv(

@@ -6,6 +6,7 @@
 ################################################################################
 # Clustering with 4 classes everywhere
   
+  if(!onlyLC) {
   names_final_cohorts <- read.csv(file.path(paste0(db.name,"_Results/"),paste0(db.name,"_cohorts.csv")))
   
   # Output folders for WP3
@@ -138,6 +139,7 @@ for (i in 1:length(factors)) {
 }
 ggsave(here::here(output_clustering, "Clustering_LCA.jpg"))
 
+}
 
 ################################################################################
 # Drug Utilisation and Treatment Patterns

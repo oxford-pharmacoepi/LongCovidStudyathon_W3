@@ -72,6 +72,7 @@ symptoms_LC <- symptoms_LC %>%
       dplyr::filter(.data$cohort_definition_id == 5) %>%
       dplyr::mutate(cohort_definition_id = 27)
   )
+
 names_symptoms <- names_final_cohorts %>% 
   dplyr::filter(.data$table_name == LongCovidCohortsName) %>%
   dplyr::filter(.data$cohort_definition_id %in% c(1:25,27)) %>%

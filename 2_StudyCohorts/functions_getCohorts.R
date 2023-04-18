@@ -199,7 +199,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   return(list(first_event,subs_events,attrition,reason_exclusion))
 }
 
-do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, first = FALSE) {
+do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, first = FALSE, indexsymptom = FALSE) {
   base <- cdm[[BaseCohortsName]] %>% 
     dplyr::filter(cohort_definition_id == base_cohort_id) %>%
     compute()
@@ -259,9 +259,17 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     file = here::here(output_at, paste0("attrition_overlap_",overlapTableName,"_",overlap_cohort_id,".csv"))
   )
   
-  overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
-    distinct() %>%
-    compute()
+  if(indexsymptom) {
+    overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
+      dplyr::rename("cohort_start_date" = "outcome_date") %>% dplyr::rename("cohort_end_date" = "outcome_end") %>%
+      distinct() %>%
+      compute()
+  } else {
+    overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
+      distinct() %>%
+      compute()
+  }
+
   if(first == TRUE) {
     computeQuery(overlap, name = overlapTableName, temporary = FALSE, overwrite = TRUE,
                     schema = results_database_schema)
@@ -364,13 +372,20 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
                                      %>% dplyr::pull(), reason = paste0("Only first event overlap base ", j)))
     
     # We are only asking for the first outcome event in the window of interest, per each index base event
-    if(indexsymptom) {
+    if(indexsymptom && first) {
       overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
         distinct() %>%
         dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%
         compute()
       computeQuery(overlap, name = Extrav2CohortsName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
+    } else if (indexsymptom && !first) {
+      overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,outcome_date,outcome_end) %>%
+        distinct() %>%
+        dplyr::rename("cohort_start_date" = "outcome_date", "cohort_end_date" = "outcome_end") %>%
+        compute()
+      appendPermanent(overlap, name = Extrav2CohortsName,
+                      schema = results_database_schema)
     } else {
       overlap <- overlap %>% dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
         distinct() %>%

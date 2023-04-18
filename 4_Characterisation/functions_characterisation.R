@@ -43,7 +43,7 @@ do_lsc <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
     temporalWindows = list(
       c(NA, -366), c(-365, -181),
       c(-180, -91), c(-90, -31), c(-30, -1),
-      c(0, 0)
+      c(0, 0), c(NA,-1)
     ))
   
   if(any) {
@@ -75,7 +75,8 @@ do_du <- function(cohort_ids_interest, stem_name, tableName, any = TRUE) {
     tablesToCharacterize = "drug_exposure",
     temporalWindows = list(
       c(-365, -181), c(-180, -91), c(-90, -31), c(-30, -1),
-      c(0, 0), c(1, 30), c(31, 90), c(91, 180), c(181, 365)
+      c(0, 0), c(1, 30), c(31, 90), c(91, 180), c(181, 365),
+      c(-365,-1), c(-90,-1), c(-180,-1)
     ))
   
   if(any) {

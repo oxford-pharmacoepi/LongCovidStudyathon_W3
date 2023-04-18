@@ -453,7 +453,6 @@ info(logger, '-- Getting overlapping cohorts')
 
 # LC any symptom + Infection / Reinfection / Test negative / Influenza
 do_overlap_LCany(cdm, c(1:4), c(5:29), c(1:4))
-# This is slow! #K
 
 # LC code + Infection
 do_overlap(cdm, 1, 27, 5, washout = FALSE, tableName = LongCovidCohortsName,

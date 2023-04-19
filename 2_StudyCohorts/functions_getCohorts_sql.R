@@ -328,10 +328,10 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
                                        %>% dplyr::pull(), reason = paste0("Washout 180 days outcome ", i)))
       
      }
-    outcome <- outcome %>% dplyr::full_join(outcome_next, by = c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date"))
+    outcome <- outcome %>% dplyr::full_join(outcome_next, by = c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>% compute()
   }
   # As symptoms, end date equals start date
-  outcome <- outcome %>% dplyr::mutate(cohort_end_date = .data$cohort_start_date)
+  outcome <- outcome %>% dplyr::mutate(cohort_end_date = .data$cohort_start_date) %>% compute()
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = outcome %>% dplyr::tally()
                                    %>% dplyr::pull(), reason = "Starting all outcomes events"))

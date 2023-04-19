@@ -117,6 +117,10 @@ computeQuery(new_infection,
              temporary = FALSE,
              schema = results_database_schema,
              overwrite = TRUE)
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName))
+
 cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],reinfection)
 cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],negativetest)
 cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],flu)
@@ -168,8 +172,14 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                            cohort_definition_id = 27, cohort_name = "LC code"))
 
 # PASC events
-create_outcome(cdm, window = c(30:39), filter_start = FALSE, 
-               new_ids = c(1:10), tableName = PascCohortsName)
+ create_outcome(cdm, window = c(30), filter_start = FALSE, 
+                new_ids = c(1), tableName = PascCohortsName)
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,PascCohortsName))
+
+create_outcome(cdm, window = c(31:39), filter_start = FALSE, 
+               new_ids = c(2:10), tableName = PascCohortsName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = PascCohortsName,
@@ -190,8 +200,16 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                            cohort_definition_id = 11, cohort_name = "Any PASC event"))
 
 # Medical conditions
-create_outcome(cdm, window = c(40:63), end_outcome = FALSE, filter_start = FALSE, 
-               new_ids = c(1:24), tableName = MedCondCohortsName)
+create_outcome(cdm, window = c(40), end_outcome = FALSE, filter_start = FALSE, 
+               new_ids = c(1), tableName = MedCondCohortsName)
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                   PascCohortsName,MedCondCohortsName))
+
+create_outcome(cdm, window = c(41:63), end_outcome = FALSE, filter_start = FALSE, 
+               new_ids = c(2:24), tableName = MedCondCohortsName)
+
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = MedCondCohortsName,
@@ -274,6 +292,9 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::compute()
     
     computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+    cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                      cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                       PascCohortsName,MedCondCohortsName,VaccCohortsName))
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
@@ -346,7 +367,10 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::compute()
     
     computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
+    cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                      cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                       PascCohortsName,MedCondCohortsName,VaccCohortsName))
+     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
@@ -430,7 +454,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::compute()
   
   computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName))
+   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
@@ -439,10 +466,10 @@ if(vaccine_data && db.name != "CPRDGold") {
                                dplyr::tibble(table_name = VaccCohortsName,
                                              cohort_definition_id = c(1:5), 
                                              cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
-  
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName))
+   
+   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                      PascCohortsName,MedCondCohortsName,VaccCohortsName))
 }
 
 # ---------------------------------------------------------------------
@@ -454,6 +481,10 @@ info(logger, '-- Getting overlapping cohorts')
 # LC any symptom + Infection / Reinfection / Test negative / Influenza
 do_overlap_LCany(cdm, c(1:4), c(5:29), c(1:4))
 # This is slow! #K
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                   PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
 
 # LC code + Infection
 do_overlap(cdm, 1, 27, 5, washout = FALSE, tableName = LongCovidCohortsName,
@@ -751,6 +782,10 @@ if(cdm[[LongCovidCohortsName]] %>%
                                dplyr::tibble(table_name = OverlapCohortsIPName,
                                              cohort_definition_id = counter, 
                                              cohort_name =paste0("Base_",1,"_LC_outcome_",1) ))
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName,
+                                     OverlapCohortsIPName))
   counter <- counter + 1
   
   for(i in c(2:4)) {

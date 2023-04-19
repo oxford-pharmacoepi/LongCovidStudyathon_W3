@@ -383,6 +383,9 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
     if(j == 1) {
       computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
+      cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                        cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                         PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
     } else {
       cdm[[OverlapCohortsCName]] <- dplyr::union_all(cdm[[OverlapCohortsCName]],overlap)
       
@@ -446,9 +449,12 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     current <- current %>% dplyr::mutate(cohort_definition_id = new_id) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       compute()
-    if(new_id == 1) {
+    if(isTRUE(new_id == 1)) {
       computeQuery(current, name = tableName, temporary = FALSE,
                       schema = results_database_schema, overwrite = TRUE)
+      cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                        cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
+      
     } else {
       cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],current)
     }
@@ -512,7 +518,7 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
                 dplyr::select(subject_id, "vacc_end_date" = "cohort_end_date"),
               by = "subject_id") %>%
     dplyr::filter(vacc_end_date > cohort_start_date) %>%
-    dplyr::mutate(cohort_end_date = ifelse(!is.na(vacc_date) & cohort_end_date > vacc_end_date, vacc_date, cohort_end_date)) %>%
+    dplyr::mutate(cohort_end_date = ifelse(!is.na(vacc_end_date) & cohort_end_date > vacc_end_date, vacc_end_date, cohort_end_date)) %>%
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()

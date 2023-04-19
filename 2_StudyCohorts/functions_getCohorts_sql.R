@@ -279,8 +279,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     computeQuery(overlap, name = overlapTableName, temporary = FALSE, overwrite = TRUE,
                     schema = results_database_schema)
   } else {
-    appendPermanent(overlap, name = overlapTableName,
-                    schema = results_database_schema)
+    cdm[[overlapTableName]] <- dplyr::union_all(cdm[[overlapTableName]],overlap)
   }
   
 }
@@ -385,8 +384,8 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
       computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
                    schema = results_database_schema, overwrite = TRUE)
     } else {
-      appendPermanent(overlap, name = OverlapCohortsCName,
-                   schema = results_database_schema)
+      cdm[[OverlapCohortsCName]] <- dplyr::union_all(cdm[[OverlapCohortsCName]],overlap)
+      
     }
 
   }
@@ -451,8 +450,7 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
       computeQuery(current, name = tableName, temporary = FALSE,
                       schema = results_database_schema, overwrite = TRUE)
     } else {
-      appendPermanent(current, name = tableName,
-                      schema = results_database_schema)
+      cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],current)
     }
     write_csv(
       attrition,
@@ -487,9 +485,9 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = any_cohort %>% dplyr::tally()
                                    %>% dplyr::pull(), reason = "Only first event"))
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],any_cohort)
   
-  appendPermanent(any_cohort, name = tableName,  schema = results_database_schema)
-  write_csv(
+    write_csv(
     attrition,
     file = here::here(output_at, paste0("attrition_any_outcome_",tableName,"_",cohort_id,".csv"))
   )
@@ -518,11 +516,9 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],vaccinated_cohort)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],nonvaccinated_cohort)
 
-  appendPermanent(vaccinated_cohort, name = tableName,
-                  schema = results_database_schema)
-  appendPermanent(nonvaccinated_cohort, name = tableName,
-                  schema = results_database_schema)
   }
 
 do_strata_calendar <- function(base_id, new_id, tableName) {
@@ -534,10 +530,8 @@ do_strata_calendar <- function(base_id, new_id, tableName) {
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date >= omicron_start_date) %>%
     mutate(cohort_definition_id = new_id+1) %>% compute()
-  appendPermanent(cohort_delta, name = tableName,
-                  schema = results_database_schema)
-  appendPermanent(cohort_omicron, name = tableName,
-                  schema = results_database_schema)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_delta)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_omicron)
   
 }
 
@@ -551,8 +545,9 @@ do_sex_strata <- function(cohort_id, new_id, tableName) {
     dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>% 
     dplyr::select(-sex) %>% 
     compute()
-  appendPermanent(females, name = tableName,  schema = results_database_schema)
-  appendPermanent(males, name = tableName,  schema = results_database_schema)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],females)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],males)
+  
   }
 
 do_age_strata <- function(cohort_id, new_id, tableName) {
@@ -591,12 +586,13 @@ do_age_strata <- function(cohort_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+7) %>%  
     dplyr::select(-age) %>% compute()
   
-  appendPermanent(age1, name = tableName,  schema = results_database_schema)
-  appendPermanent(age2, name = tableName,  schema = results_database_schema)
-  appendPermanent(age3, name = tableName,  schema = results_database_schema)
-  appendPermanent(age4, name = tableName,  schema = results_database_schema)
-  appendPermanent(age5, name = tableName,  schema = results_database_schema)
-  appendPermanent(age6, name = tableName,  schema = results_database_schema)
-  appendPermanent(age7, name = tableName,  schema = results_database_schema)
-  appendPermanent(age8, name = tableName,  schema = results_database_schema)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age1)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age2)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age3)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age4)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age5)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age6)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age7)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age8)
+  
 }

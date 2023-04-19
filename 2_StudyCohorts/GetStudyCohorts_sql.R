@@ -117,12 +117,9 @@ computeQuery(new_infection,
              temporary = FALSE,
              schema = results_database_schema,
              overwrite = TRUE)
-appendPermanent(reinfection, name = BaseCohortsName,
-                schema = results_database_schema)
-appendPermanent(negativetest, name = BaseCohortsName,
-                schema = results_database_schema)
-appendPermanent(flu, name = BaseCohortsName,
-                schema = results_database_schema)
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],reinfection)
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],negativetest)
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],flu)
 
 write_csv(
   attrition,
@@ -277,10 +274,10 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::compute()
     
     computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    appendPermanent(nonvaccinated, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_first, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_second, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_third, name = VaccCohortsName,  schema = results_database_schema)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -349,10 +346,10 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::compute()
     
     computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    appendPermanent(nonvaccinated, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_first, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_second, name = VaccCohortsName,  schema = results_database_schema)
-    appendPermanent(vaccinated_third, name = VaccCohortsName,  schema = results_database_schema)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -433,10 +430,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::compute()
   
   computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-  appendPermanent(nonvaccinated, name = VaccCohortsName,  schema = results_database_schema)
-  appendPermanent(vaccinated_first, name = VaccCohortsName,  schema = results_database_schema)
-  appendPermanent(vaccinated_second, name = VaccCohortsName,  schema = results_database_schema)
-  appendPermanent(vaccinated_third, name = VaccCohortsName,  schema = results_database_schema)
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
   
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = VaccCohortsName,

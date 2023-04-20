@@ -495,8 +495,8 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName, tab
     return(tableold)  
 }
 
-do_overlap_vacc <- function(base_id, new_id, tableName) {
-  vaccinated_cohort <- cdm[[tableName]] %>%
+do_overlap_vacc <- function(base_id, new_id, tableName, tableold) {
+  vaccinated_cohort <- tableold %>%
     dplyr::filter(cohort_definition_id == base_id) %>% 
     left_join(cdm[[VaccCohortsName]] %>%
                 dplyr::filter(cohort_definition_id == 1) %>% 
@@ -507,7 +507,7 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
-  nonvaccinated_cohort <- cdm[[tableName]] %>%
+  nonvaccinated_cohort <- tableold %>%
     dplyr::filter(cohort_definition_id == base_id) %>% 
     left_join(cdm[[VaccCohortsName]] %>%
                 dplyr::filter(cohort_definition_id == 2) %>%
@@ -518,27 +518,28 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],vaccinated_cohort) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],nonvaccinated_cohort) %>% computeQuery()
-
+   
+  tableold <- dplyr::union_all(tableold, vaccinated_cohort, nonvaccinated_cohort)
+ 
+  return(tableold)
   }
 
-do_strata_calendar <- function(base_id, new_id, tableName) {
-  cohort_delta <- cdm[[tableName]] %>%
+do_strata_calendar <- function(base_id, new_id, tableName, tableold) {
+  cohort_delta <- tableold %>%
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date < omicron_start_date) %>%
     mutate(cohort_definition_id = new_id) %>% compute()
-  cohort_omicron <- cdm[[tableName]] %>%
+  cohort_omicron <- tableold %>%
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date >= omicron_start_date) %>%
     mutate(cohort_definition_id = new_id+1) %>% compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_delta) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_omicron) %>% computeQuery()
   
+  tableold <- dplyr::union_all(tableold, cohort_delta, cohort_omicron)
+  return(tableold)
 }
 
-do_sex_strata <- function(cohort_id, new_id, tableName) {
-  sex_strata <- cdm[[tableName]] %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
+do_sex_strata <- function(cohort_id, new_id, tableName, tableold) {
+  sex_strata <- tableold %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
     compute()
   females <- sex_strata %>% addSex(cdm) %>% dplyr::filter(sex == "Female") %>% 
     dplyr::mutate(cohort_definition_id = new_id) %>% 
@@ -547,13 +548,13 @@ do_sex_strata <- function(cohort_id, new_id, tableName) {
     dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>% 
     dplyr::select(-sex) %>% 
     compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],females) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],males) %>% computeQuery()
+  tableold <- dplyr::union_all(tableold, females, males)
+  return(tableold)
   
   }
 
-do_age_strata <- function(cohort_id, new_id, tableName) {
-  age_strata <- cdm[[tableName]] %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
+do_age_strata <- function(cohort_id, new_id, tableName, tableold) {
+  age_strata <- tableold %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
     compute()
   age1 <- age_strata %>% addAge(cdm) %>% 
     dplyr::filter(age %in% c(0:2)) %>% 
@@ -588,13 +589,7 @@ do_age_strata <- function(cohort_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+7) %>%  
     dplyr::select(-age) %>% compute()
   
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age1) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age2) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age3) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age4) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age5) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age6) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age7) %>% computeQuery()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age8) %>% computeQuery()
+  tableold <- dplyr::union_all(tableold, age1, age2, age3, age4, age5, age6, age7, age8)
+  return(tableold)
   
 }

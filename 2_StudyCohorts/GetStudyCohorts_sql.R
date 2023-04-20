@@ -121,9 +121,9 @@ computeQuery(new_infection,
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName))
 
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],reinfection)
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],negativetest)
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],flu)
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],reinfection) %>% computeQuery()
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],negativetest) %>% computeQuery()
+cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],flu) %>% computeQuery()
 
 write_csv(
   attrition,
@@ -295,10 +295,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                       cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                        PascCohortsName,MedCondCohortsName,VaccCohortsName))
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -370,10 +370,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                       cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                        PascCohortsName,MedCondCohortsName,VaccCohortsName))
-     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
+     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
+    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -457,10 +457,10 @@ if(vaccine_data && db.name != "CPRDGold") {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                      PascCohortsName,MedCondCohortsName,VaccCohortsName))
-   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated)
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first)
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second)
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third)
+   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
+  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
   
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = VaccCohortsName,

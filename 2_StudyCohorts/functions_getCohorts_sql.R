@@ -94,7 +94,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
         !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$end_covid_testing_date)) & .data$cohort_end_date > .data$end_covid_testing_date, .data$end_covid_testing_date, .data$cohort_end_date))) %>%
-      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_end_date", "cohort_start_date")) %>% 
+      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_start_date", "cohort_end_date")) %>% 
       dplyr::mutate(reason_censoring = ifelse(
         !(is.na(event)) &
           cohort_end_date == event, "COVID-19",
@@ -123,7 +123,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
         !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$end_influenza_date)) & .data$cohort_end_date > .data$end_influenza_date, .data$end_influenza_date, .data$cohort_end_date))) %>%
-      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_end_date", "cohort_start_date")) %>% 
+      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_start_date", "cohort_end_date")) %>% 
       dplyr::mutate(reason_censoring = ifelse(
         !(is.na(.data$event)) &
           cohort_end_date == .data$event, "COVID-19",
@@ -147,7 +147,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
         !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$end_covid_testing_date)) & .data$cohort_end_date > .data$end_covid_testing_date, .data$end_covid_testing_date, .data$cohort_end_date))) %>%
-      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_end_date", "cohort_start_date")) %>% 
+      dplyr::mutate(follow_up_days = !!CDMConnector::datediff("cohort_start_date", "cohort_end_date")) %>% 
       dplyr::mutate(reason_censoring = ifelse(!(is.na(.data$death_date)) & cohort_end_date == .data$death_date, "death",
                                               ifelse(cohort_end_date == .data$one_year_date, "one year of follow_up",
                                                      ifelse(cohort_end_date == .data$end_covid_testing_date, "End of COVID-19 testing",
@@ -279,7 +279,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     computeQuery(overlap, name = overlapTableName, temporary = FALSE, overwrite = TRUE,
                     schema = results_database_schema)
   } else {
-    cdm[[overlapTableName]] <- dplyr::union_all(cdm[[overlapTableName]],overlap)
+    cdm[[overlapTableName]] <- dplyr::union_all(cdm[[overlapTableName]],overlap) %>% computeQuery()
   }
   
 }
@@ -387,7 +387,7 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
                         cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
                                          PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
     } else {
-      cdm[[OverlapCohortsCName]] <- dplyr::union_all(cdm[[OverlapCohortsCName]],overlap)
+      cdm[[OverlapCohortsCName]] <- dplyr::union_all(cdm[[OverlapCohortsCName]],overlap) %>% computeQuery()
       
     }
 
@@ -456,7 +456,7 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
                         cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
       
     } else {
-      cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],current)
+      cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],current) %>% computeQuery()
     }
     write_csv(
       attrition,
@@ -491,7 +491,7 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = any_cohort %>% dplyr::tally()
                                    %>% dplyr::pull(), reason = "Only first event"))
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],any_cohort)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],any_cohort) %>% computeQuery()
   
     write_csv(
     attrition,
@@ -522,8 +522,8 @@ do_overlap_vacc <- function(base_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],vaccinated_cohort)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],nonvaccinated_cohort)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],vaccinated_cohort) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],nonvaccinated_cohort) %>% computeQuery()
 
   }
 
@@ -536,8 +536,8 @@ do_strata_calendar <- function(base_id, new_id, tableName) {
     dplyr::filter(cohort_definition_id == base_id) %>%
     dplyr::filter(cohort_start_date >= omicron_start_date) %>%
     mutate(cohort_definition_id = new_id+1) %>% compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_delta)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_omicron)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_delta) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],cohort_omicron) %>% computeQuery()
   
 }
 
@@ -551,8 +551,8 @@ do_sex_strata <- function(cohort_id, new_id, tableName) {
     dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>% 
     dplyr::select(-sex) %>% 
     compute()
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],females)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],males)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],females) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],males) %>% computeQuery()
   
   }
 
@@ -592,13 +592,13 @@ do_age_strata <- function(cohort_id, new_id, tableName) {
     dplyr::mutate(cohort_definition_id = new_id+7) %>%  
     dplyr::select(-age) %>% compute()
   
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age1)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age2)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age3)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age4)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age5)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age6)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age7)
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age8)
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age1) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age2) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age3) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age4) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age5) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age6) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age7) %>% computeQuery()
+  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],age8) %>% computeQuery()
   
 }

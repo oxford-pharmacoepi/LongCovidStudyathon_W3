@@ -44,8 +44,8 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = cohort %>%
                                        dplyr::tally()
-                       %>% dplyr::pull(), reason = paste0(before_look, 
-                        " days of prior history")))
+                                     %>% dplyr::pull(), reason = paste0(before_look, 
+                                                                        " days of prior history")))
     
     cohort <- cohort %>% dplyr::select(-c(prior_history)) %>% compute()
   }
@@ -61,7 +61,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = cohort %>%
                                        dplyr::tally()
-                       %>% dplyr::pull(), reason = "Historical influenza"))
+                                     %>% dplyr::pull(), reason = "Historical influenza"))
     cohort <- cohort %>% dplyr::select(-c(event,last_flu)) %>% compute()
   }
   
@@ -69,8 +69,8 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   cohort <- cohort %>% dplyr::filter(.data$cohort_start_date > S_start_date) %>% compute()
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = cohort %>% dplyr::tally()
-                     %>% dplyr::pull(), reason = paste0("Entry after ",
-                                                        S_start_date)))
+                                   %>% dplyr::pull(), reason = paste0("Entry after ",
+                                                                      S_start_date)))
   
   # censor on covid infection too if due
   if(covidcensor == TRUE && influenza == FALSE) {
@@ -88,8 +88,8 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     cohort <- cohort %>% 
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$death_date)) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
-        dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
-          !(is.na(.data$event)) & .data$cohort_end_date > .data$event, .data$event, .data$cohort_end_date))) %>%
+      dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
+        !(is.na(.data$event)) & .data$cohort_end_date > .data$event, .data$event, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
         !(is.na(.data$one_year_date)) & .data$cohort_end_date > .data$one_year_date, .data$one_year_date, .data$cohort_end_date))) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(
@@ -110,7 +110,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
       compute()
     # censor on observation_end, death, study end date, or covid (re)infection
     cohort <- cohort %>% dplyr::mutate(one_year_date = 
-                                  !!CDMConnector::dateadd("cohort_start_date", 365)) %>%
+                                         !!CDMConnector::dateadd("cohort_start_date", 365)) %>%
       dplyr::mutate(end_influenza_date =  as.Date("2019-12-31")) %>% # before Covid-19 pandemic
       dplyr::left_join(observation_death, by = c("subject_id")) %>%
       compute()
@@ -136,7 +136,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   } else {
     # censor on observation_end, death, study end date, or covid (re)infection
     cohort <- cohort %>% dplyr::mutate(one_year_date = 
-                                  !!CDMConnector::dateadd("cohort_start_date", 365)) %>%
+                                         !!CDMConnector::dateadd("cohort_start_date", 365)) %>%
       dplyr::mutate(end_covid_testing_date =  as.Date(.env$covid_end_date)) %>% # asked in the CodeToRun file
       left_join(observation_death, by = c("subject_id")) %>%
       compute()
@@ -154,8 +154,8 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
                                                             ifelse(cohort_end_date == .data$observation_period_end_date,
                                                                    "end of data collection or exit from database",NA ))))) %>% compute()
   }
-
- 
+  
+  
   
   if(dataafter) {
     # exclude if follow-up < specified days
@@ -169,8 +169,8 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = cohort %>%
                                        dplyr::tally()
-                       %>% dplyr::pull(), reason = paste0(
-                         "> ",after_look, " days follow-up")))
+                                     %>% dplyr::pull(), reason = paste0(
+                                       "> ",after_look, " days follow-up")))
   }
   
   # get first or subsequent events
@@ -183,10 +183,10 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   
   first_event <- cohort %>% dplyr::filter(seq == 1) %>% dplyr::select(-seq) %>% compute()
   subs_events <- cohort %>% dplyr::filter(seq != 1) %>% dplyr::select(-seq) %>% compute()
-
+  
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = first_event %>% dplyr::tally()
-                     %>% dplyr::pull(), reason = "First event only"))
+                                   %>% dplyr::pull(), reason = "First event only"))
   
   # Not for any "re-event" cohort
   if(covid_preid) {
@@ -198,20 +198,27 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
     first_event <- first_event %>% dplyr::filter(is.na(.data$event)) %>% compute()
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = first_event %>% dplyr::tally()
-                       %>% dplyr::pull(), reason = "Historical COVID-19"))
+                                     %>% dplyr::pull(), reason = "Historical COVID-19"))
     first_event <- first_event %>% dplyr::select(-c(event)) %>% compute()
   }
-
+  
   return(list(first_event,subs_events,attrition,reason_exclusion))
 }
 
-do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, first = FALSE, indexsymptom = FALSE, tableold) {
+do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, tableget = TRUE, first = FALSE, indexsymptom = FALSE, tableold) {
   base <- cdm[[BaseCohortsName]] %>% 
     dplyr::filter(cohort_definition_id == base_cohort_id) %>%
     compute()
-  outcome <- cdm[[tableName]] %>% 
-    dplyr::filter(cohort_definition_id == outcome_cohort_id) %>%
-    compute()
+  if(!tableget){
+    outcome <- tableold %>% 
+      dplyr::filter(cohort_definition_id == outcome_cohort_id) %>%
+      compute()
+  } else {
+    outcome <- cdm[[tableName]] %>% 
+      dplyr::filter(cohort_definition_id == outcome_cohort_id) %>%
+      compute()
+  }
+  
   overlap <- base %>% 
     dplyr::inner_join(
       outcome %>% 
@@ -253,7 +260,7 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
     if("event" %in% colnames(overlap)) {
       overlap <- overlap %>% 
         dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
-      dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% 
+        dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% 
         compute()
       attrition <- rbind(attrition, 
                          dplyr::tibble(number_observations = overlap %>% dplyr::tally()
@@ -274,11 +281,10 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
       distinct() %>%
       compute()
   }
-
+  
   if(first == TRUE) {
-    overlap <- overlap
   } else {
-    overlap <- dplyr::union_all(tableold, overlap)
+    overlap <- dplyr::union_all(tableold, overlap) %>% compute()
   }
   
   return(overlap)
@@ -301,7 +307,7 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
   
   if("event" %in% colnames(outcome)) {
     outcome <- outcome %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
-    dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
+      dplyr::filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = outcome %>% dplyr::tally()
                                      %>% dplyr::pull(), reason = paste0("Washout 180 days outcome ", first_outcome)))
@@ -321,12 +327,12 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
     
     if("event" %in% colnames(outcome_next)) {
       outcome_next <- outcome_next %>% dplyr::mutate(date_previous = !!CDMConnector::datediff("cohort_start_date", "event")) %>%
-         filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
+        filter(is.na(.data$date_previous)) %>% dplyr::select(-c(event,date_previous)) %>% compute()
       attrition <- rbind(attrition, 
                          dplyr::tibble(number_observations = outcome_next %>% dplyr::tally()
                                        %>% dplyr::pull(), reason = paste0("Washout 180 days outcome ", i)))
       
-     }
+    }
     outcome <- outcome %>% dplyr::full_join(outcome_next, by = c("subject_id", "cohort_definition_id", "cohort_start_date", "cohort_end_date")) %>% compute()
   }
   # As symptoms, end date equals start date
@@ -386,7 +392,7 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
       overlapend <- dplyr::union_all(overlapend, overlap) %>% compute()
       
     }
-
+    
   }
   write_csv(
     attrition,
@@ -436,8 +442,8 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     
     current <- current %>% dplyr::left_join(observation_death, by = c("subject_id")) %>%
       dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
-    compute()
-
+      compute()
+    
     if(end_outcome) {
       current <- current %>% dplyr::mutate(cohort_end_date = .data$cohort_start_date) %>%
         compute()
@@ -446,11 +452,12 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     current <- current %>% dplyr::mutate(cohort_definition_id = new_id) %>%
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       compute()
-    if(isTRUE(new_id == 1)) {
-      currenttable <- current
+    
+    if(isTRUE(counter == 1)) {
+      currenttable <- current %>% compute()
       
     } else {
-      currenttable <- dplyr::union_all(currenttable, current)
+      currenttable <- dplyr::union_all(currenttable, current) %>% compute()
     }
     write_csv(
       attrition,
@@ -458,8 +465,8 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
     )
     counter <- counter + 1
   }
-return(currenttable)
-  }
+  return(currenttable)
+}
 
 create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName, tableold) {
   cohorts <- tableold %>%
@@ -486,13 +493,13 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName, tab
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = any_cohort %>% dplyr::tally()
                                    %>% dplyr::pull(), reason = "Only first event"))
-  tableold <- dplyr::union_all(tableold,any_cohort) 
-
-    write_csv(
+  tableold <- dplyr::union_all(tableold,any_cohort) %>% compute()
+  
+  write_csv(
     attrition,
     file = here::here(output_at, paste0("attrition_any_outcome_",tableName,"_",cohort_id,".csv"))
   )
-    return(tableold)  
+  return(tableold)  
 }
 
 do_overlap_vacc <- function(base_id, new_id, tableName, tableold) {
@@ -518,11 +525,12 @@ do_overlap_vacc <- function(base_id, new_id, tableName, tableold) {
     dplyr::mutate(cohort_definition_id = new_id+1) %>%
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     compute()
-   
-  tableold <- dplyr::union_all(tableold, vaccinated_cohort, nonvaccinated_cohort)
- 
+  
+  tableold <- dplyr::union_all(tableold, vaccinated_cohort) %>% compute()
+  tableold <- dplyr::union_all(tableold, nonvaccinated_cohort) %>% compute()
+  
   return(tableold)
-  }
+}
 
 do_strata_calendar <- function(base_id, new_id, tableName, tableold) {
   cohort_delta <- tableold %>%
@@ -534,7 +542,9 @@ do_strata_calendar <- function(base_id, new_id, tableName, tableold) {
     dplyr::filter(cohort_start_date >= omicron_start_date) %>%
     mutate(cohort_definition_id = new_id+1) %>% compute()
   
-  tableold <- dplyr::union_all(tableold, cohort_delta, cohort_omicron)
+  tableold <- dplyr::union_all(tableold, cohort_delta) %>% compute()
+  tableold <- dplyr::union_all(tableold, cohort_omicron) %>% compute()
+  
   return(tableold)
 }
 
@@ -548,10 +558,12 @@ do_sex_strata <- function(cohort_id, new_id, tableName, tableold) {
     dplyr::filter(sex == "Male") %>% dplyr::mutate(cohort_definition_id = new_id + 1) %>% 
     dplyr::select(-sex) %>% 
     compute()
-  tableold <- dplyr::union_all(tableold, females, males)
+  tableold <- dplyr::union_all(tableold, females) %>% compute()
+  tableold <- dplyr::union_all(tableold, males) %>% compute()
+  
   return(tableold)
   
-  }
+}
 
 do_age_strata <- function(cohort_id, new_id, tableName, tableold) {
   age_strata <- tableold %>% dplyr::filter(cohort_definition_id == cohort_id) %>%
@@ -589,7 +601,16 @@ do_age_strata <- function(cohort_id, new_id, tableName, tableold) {
     dplyr::mutate(cohort_definition_id = new_id+7) %>%  
     dplyr::select(-age) %>% compute()
   
-  tableold <- dplyr::union_all(tableold, age1, age2, age3, age4, age5, age6, age7, age8)
+  tableold <- dplyr::union_all(tableold, age1) %>% compute()
+  tableold <- dplyr::union_all(tableold, age2) %>% compute()
+  tableold <- dplyr::union_all(tableold, age3) %>% compute()
+  tableold <- dplyr::union_all(tableold, age4) %>% compute()
+  tableold <- dplyr::union_all(tableold, age5) %>% compute()
+  tableold <- dplyr::union_all(tableold, age6) %>% compute()
+  tableold <- dplyr::union_all(tableold, age7) %>% compute()
+  tableold <- dplyr::union_all(tableold, age8) %>% compute()
+  
   return(tableold)
   
 }
+

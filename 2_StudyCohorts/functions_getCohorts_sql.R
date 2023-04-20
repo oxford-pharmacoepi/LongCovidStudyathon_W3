@@ -205,7 +205,7 @@ do_exclusion <- function(cdm, cohort, id, databefore = TRUE,
   return(list(first_event,subs_events,attrition,reason_exclusion))
 }
 
-do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, first = FALSE, indexsymptom = FALSE) {
+do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id, washout = TRUE, tableName, overlapTableName, first = FALSE, indexsymptom = FALSE, tableold) {
   base <- cdm[[BaseCohortsName]] %>% 
     dplyr::filter(cohort_definition_id == base_cohort_id) %>%
     compute()
@@ -276,12 +276,12 @@ do_overlap <- function(cdm, base_cohort_id, outcome_cohort_id, overlap_cohort_id
   }
 
   if(first == TRUE) {
-    computeQuery(overlap, name = overlapTableName, temporary = FALSE, overwrite = TRUE,
-                    schema = results_database_schema)
+    overlap <- overlap
   } else {
-    cdm[[overlapTableName]] <- dplyr::union_all(cdm[[overlapTableName]],overlap) %>% computeQuery()
+    overlap <- dplyr::union_all(tableold, overlap)
   }
   
+  return(overlap)
 }
 
 do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_cohort_id) {
@@ -381,13 +381,9 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
       distinct() %>%
       compute()
     if(j == 1) {
-      computeQuery(overlap, name = OverlapCohortsCName, temporary = FALSE,
-                   schema = results_database_schema, overwrite = TRUE)
-      cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                        cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                         PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
+      overlapend <- overlap
     } else {
-      cdm[[OverlapCohortsCName]] <- dplyr::union_all(cdm[[OverlapCohortsCName]],overlap) %>% computeQuery()
+      overlapend <- dplyr::union_all(overlapend, overlap) %>% compute()
       
     }
 
@@ -396,6 +392,7 @@ do_overlap_LCany <- function(cdm, bases_cohort_id, outcomes_cohort_id, overlaps_
     attrition,
     file = here::here(output_at, paste0("attrition_overlap_LCany.csv"))
   )
+  return(overlapend)
 }
 
 create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE, end_outcome = TRUE, new_ids, tableName) {
@@ -450,24 +447,22 @@ create_outcome <- function(cdm, window, filter_start = TRUE, first_event = TRUE,
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       compute()
     if(isTRUE(new_id == 1)) {
-      computeQuery(current, name = tableName, temporary = FALSE,
-                      schema = results_database_schema, overwrite = TRUE)
-      cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                        cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
+      currenttable <- current
       
     } else {
-      cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],current) %>% computeQuery()
+      currenttable <- dplyr::union_all(currenttable, current)
     }
     write_csv(
       attrition,
       file = here::here(output_at, paste0("attrition_outcome_",tableName,"_",new_id,".csv"))
     )
     counter <- counter + 1
-   }
-}
+  }
+return(currenttable)
+  }
 
-create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
-  cohorts <- cdm[[tableName]] %>%
+create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName, tableold) {
+  cohorts <- tableold %>%
     dplyr::filter(cohort_definition_id %in% window)
   attrition <- dplyr::tibble(
     number_observations = cohorts %>% dplyr::tally() %>% dplyr::pull(),
@@ -491,12 +486,13 @@ create_any_cohort <- function(cdm, window, cohort_id, LC = FALSE, tableName) {
   attrition <- rbind(attrition, 
                      dplyr::tibble(number_observations = any_cohort %>% dplyr::tally()
                                    %>% dplyr::pull(), reason = "Only first event"))
-  cdm[[tableName]] <- dplyr::union_all(cdm[[tableName]],any_cohort) %>% computeQuery()
-  
+  tableold <- dplyr::union_all(tableold,any_cohort) 
+
     write_csv(
     attrition,
     file = here::here(output_at, paste0("attrition_any_outcome_",tableName,"_",cohort_id,".csv"))
   )
+    return(tableold)  
 }
 
 do_overlap_vacc <- function(base_id, new_id, tableName) {

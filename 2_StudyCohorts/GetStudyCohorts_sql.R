@@ -112,7 +112,42 @@ attrition_censor_flu <- attrition_censor_flu %>% dplyr::mutate(cohort_definition
   compute()
 attrition_censor <- rbind(attrition_censor_positive,attrition_censor_negative,attrition_censor_flu)
 
-computeQuery(new_infection,
+bases <- dplyr::union_all(new_infection, reinfection, negativetest, flu)
+
+# Get strata of bases
+bases <- do_sex_strata(1, 5, BaseCohortsName, tableold = bases)
+bases <- do_sex_strata(2, 7, BaseCohortsName, tableold = bases)
+bases <- do_sex_strata(3, 9, BaseCohortsName, tableold = bases)
+bases <- do_sex_strata(4, 11, BaseCohortsName, tableold = bases)
+
+bases <- do_age_strata(1, 13, BaseCohortsName, tableold = bases)
+bases <- do_age_strata(2, 21, BaseCohortsName, tableold = bases)
+bases <- do_age_strata(3, 29, BaseCohortsName, tableold = bases)
+bases <- do_age_strata(4, 37, BaseCohortsName, tableold = bases)
+
+if(vaccine_data) {
+  bases <- do_overlap_vacc(1, 45, BaseCohortsName, tableold = bases)
+  bases <- do_overlap_vacc(2, 47, BaseCohortsName, tableold = bases)
+  bases <- do_overlap_vacc(3, 49, BaseCohortsName, tableold = bases)
+  bases <- do_overlap_vacc(4, 51, BaseCohortsName, tableold = bases)
+}
+
+bases <- do_strata_calendar(1, 53, BaseCohortsName, tableold = bases)
+bases <- do_strata_calendar(2, 55, BaseCohortsName, tableold = bases)
+bases <- do_strata_calendar(3, 57, BaseCohortsName, tableold = bases)
+bases <- do_strata_calendar(4, 59, BaseCohortsName, tableold = bases)
+
+if(doTreatmentPatterns) {
+  bases <- create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
+                 new_ids = c(61:92), tableName = BaseCohortsName, tableold = bases)
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = BaseCohortsName,
+                                             cohort_definition_id = c(61:92),
+                                             cohort_name = Initial_cohorts$cohort_name[68:99]))
+  
+}
+
+computeQuery(bases,
              name = BaseCohortsName,
              temporary = FALSE,
              schema = results_database_schema,
@@ -121,9 +156,6 @@ computeQuery(new_infection,
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName))
 
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],reinfection) %>% computeQuery()
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],negativetest) %>% computeQuery()
-cdm[[BaseCohortsName]] <- dplyr::union_all(cdm[[BaseCohortsName]],flu) %>% computeQuery()
 
 write_csv(
   attrition,
@@ -145,11 +177,8 @@ message("Getting outcome cohorts")
 info(logger, '-- Getting outcome cohorts')
 
 # Long covid symptoms
-create_outcome(cdm, window = c(5:29), filter_start = FALSE, first_event = FALSE, 
+table_lc <- create_outcome(cdm, window = c(5:29), filter_start = FALSE, first_event = FALSE, 
                new_ids = c(1:25), tableName = LongCovidCohortsName)
-
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
@@ -157,64 +186,54 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                            cohort_name = Initial_cohorts$cohort_name[5:29]))
 
 # Any LC symptom
-create_any_cohort(cdm, c(5:29), cohort_id = 26, LC = TRUE, 
-                  tableName = LongCovidCohortsName)
+table_lc <- create_any_cohort(cdm, c(5:29), cohort_id = 26, LC = TRUE, 
+                  tableName = LongCovidCohortsName, tableold = table_lc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
                                            cohort_definition_id = 26, cohort_name = "Any LC symptom"))
 
 # LC code
-create_outcome(cdm, window = 101, new_ids = 27, tableName = LongCovidCohortsName)
+table_lccode <- create_outcome(cdm, window = 101, new_ids = 27, tableName = LongCovidCohortsName)
+
+computeQuery(dplyr::union_all(table_lc, table_lccode), LongCovidCohortsName, schema = results_database_schema, temporary = FALSE, overwrite = TRUE)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
                                            cohort_definition_id = 27, cohort_name = "LC code"))
 
 # PASC events
- create_outcome(cdm, window = c(30), filter_start = FALSE, 
-                new_ids = c(1), tableName = PascCohortsName)
-
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,PascCohortsName))
-
-create_outcome(cdm, window = c(31:39), filter_start = FALSE, 
-               new_ids = c(2:10), tableName = PascCohortsName)
+table_pasc <- create_outcome(cdm, window = c(30:39), filter_start = FALSE, 
+               new_ids = c(1:10), tableName = PascCohortsName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = PascCohortsName,
                                            cohort_definition_id = c(1:10),
                                            cohort_name = Initial_cohorts$cohort_name[30:39]))
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                   PascCohortsName))
-
 
 # Any PASC event
-create_any_cohort(cdm, c(1:10), cohort_id = 11,
-                  tableName = PascCohortsName)
+table_pasc <- create_any_cohort(cdm, c(1:10), cohort_id = 11,
+                  tableName = PascCohortsName, tableold = table_pasc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = PascCohortsName,
                                            cohort_definition_id = 11, cohort_name = "Any PASC event"))
 
+computeQuery(table_pasc, PascCohortsName, temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+
+
 # Medical conditions
-create_outcome(cdm, window = c(40), end_outcome = FALSE, filter_start = FALSE, 
-               new_ids = c(1), tableName = MedCondCohortsName)
-
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                   PascCohortsName,MedCondCohortsName))
-
-create_outcome(cdm, window = c(41:63), end_outcome = FALSE, filter_start = FALSE, 
-               new_ids = c(2:24), tableName = MedCondCohortsName)
-
+table_mc <- create_outcome(cdm, window = c(40:63), end_outcome = FALSE, filter_start = FALSE, 
+               new_ids = c(1:24), tableName = MedCondCohortsName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = MedCondCohortsName,
                                            cohort_definition_id = c(1:24),
                                            cohort_name = Initial_cohorts$cohort_name[40:63]))
+
+computeQuery(table_mc, MedCondCohortsName, temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
@@ -291,14 +310,9 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     
-    computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                      cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                       PascCohortsName,MedCondCohortsName,VaccCohortsName))
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
+    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+    
+    computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -366,14 +380,9 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       dplyr::compute()
     
-    computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                      cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                       PascCohortsName,MedCondCohortsName,VaccCohortsName))
-     cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
-    cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
+    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+    
+    computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
     
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
@@ -453,14 +462,9 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     dplyr::compute()
   
-  computeQuery(vaccinated, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName))
-   cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],nonvaccinated) %>% computeQuery()
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_first) %>% computeQuery()
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_second) %>% computeQuery()
-  cdm[[VaccCohortsName]] <- dplyr::union_all(cdm[[VaccCohortsName]],vaccinated_third) %>% computeQuery()
+  vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+  
+  computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
   
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = VaccCohortsName,
@@ -479,44 +483,40 @@ message("Getting overlapping cohorts")
 info(logger, '-- Getting overlapping cohorts')
 
 # LC any symptom + Infection / Reinfection / Test negative / Influenza
-do_overlap_LCany(cdm, c(1:4), c(5:29), c(1:4))
+overlaplc <- do_overlap_LCany(cdm, c(1:4), c(5:29), c(1:4))
 # This is slow! #K
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                   PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
-
 # LC code + Infection
-do_overlap(cdm, 1, 27, 5, washout = FALSE, tableName = LongCovidCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 1, 27, 5, washout = FALSE, tableName = LongCovidCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # LC code + Reinfection
-do_overlap(cdm, 2, 27, 6, washout = FALSE, tableName = LongCovidCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 2, 27, 6, washout = FALSE, tableName = LongCovidCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # LC code + Test negative
-do_overlap(cdm, 3, 27, 7, washout = FALSE, tableName = LongCovidCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 3, 27, 7, washout = FALSE, tableName = LongCovidCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # LC code + Influenza
-do_overlap(cdm, 4, 27, 8, washout = FALSE, tableName = LongCovidCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 4, 27, 8, washout = FALSE, tableName = LongCovidCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # PASC any symptom + Infection
-do_overlap(cdm, 1, 11, 9, washout = FALSE, tableName = PascCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 1, 11, 9, washout = FALSE, tableName = PascCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # PASC any symptom + Reinfection
-do_overlap(cdm, 2, 11, 10, washout = FALSE, tableName = PascCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 2, 11, 10, washout = FALSE, tableName = PascCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # PASC any symptom + Test negative
-do_overlap(cdm, 3, 11, 11, washout = FALSE, tableName = PascCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 3, 11, 11, washout = FALSE, tableName = PascCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 # PASC any symptom + Influenza
-do_overlap(cdm, 4, 11, 12, washout = FALSE, tableName = PascCohortsName,
-           overlapTableName = OverlapCohortsCName)
+overlaplc <- do_overlap(cdm, 4, 11, 12, washout = FALSE, tableName = PascCohortsName,
+           overlapTableName = OverlapCohortsCName, tableold = overlaplc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = OverlapCohortsCName,
@@ -525,36 +525,20 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "LC_code_inf","LC_code_reinf","LC_code_neg","LC_code_flu",
                                                           "PASC_any_inf","PASC_any_reinf","PASC_any_neg","PASC_any_ flu")))
 
-if(vaccine_data) {
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
-                                     OverlapCohortsCName))
-} else {
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,
-                                     OverlapCohortsCName))
-}                        
-
 
 # Characterisation cohorts stratified by sex
-do_sex_strata(1, 5, BaseCohortsName)
-do_sex_strata(2, 7, BaseCohortsName)
-do_sex_strata(3, 9, BaseCohortsName)
-do_sex_strata(4, 11, BaseCohortsName)
-do_sex_strata(1, 13, OverlapCohortsCName)
-do_sex_strata(2, 15, OverlapCohortsCName)
-do_sex_strata(3, 17, OverlapCohortsCName)
-do_sex_strata(4, 19, OverlapCohortsCName)
-do_sex_strata(5, 21, OverlapCohortsCName)
-do_sex_strata(6, 23, OverlapCohortsCName)
-do_sex_strata(7, 25, OverlapCohortsCName)
-do_sex_strata(8, 27, OverlapCohortsCName)
-do_sex_strata(9, 29, OverlapCohortsCName)
-do_sex_strata(10, 31, OverlapCohortsCName)
-do_sex_strata(11, 33, OverlapCohortsCName)
-do_sex_strata(12, 35, OverlapCohortsCName)
+overlaplc <- do_sex_strata(1, 13, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(2, 15, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(3, 17, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(4, 19, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(5, 21, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(6, 23, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(7, 25, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(8, 27, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(9, 29, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(10, 31, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(11, 33, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_sex_strata(12, 35, OverlapCohortsCName, tableold = overlaplc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = BaseCohortsName,
@@ -581,22 +565,18 @@ names_final_cohorts <- rbind(names_final_cohorts,
 
 
 # Characterisation cohorts stratified by age
-do_age_strata(1, 13, BaseCohortsName)
-do_age_strata(2, 21, BaseCohortsName)
-do_age_strata(3, 29, BaseCohortsName)
-do_age_strata(4, 37, BaseCohortsName)
-do_age_strata(1, 37, OverlapCohortsCName)
-do_age_strata(2, 45, OverlapCohortsCName)
-do_age_strata(3, 53, OverlapCohortsCName)
-do_age_strata(4, 61, OverlapCohortsCName)
-do_age_strata(5, 69, OverlapCohortsCName)
-do_age_strata(6, 77, OverlapCohortsCName)
-do_age_strata(7, 85, OverlapCohortsCName)
-do_age_strata(8, 93, OverlapCohortsCName)
-do_age_strata(9, 101, OverlapCohortsCName)
-do_age_strata(10, 109, OverlapCohortsCName)
-do_age_strata(11, 117, OverlapCohortsCName)
-do_age_strata(12, 125, OverlapCohortsCName)
+overlaplc <- do_age_strata(1, 37, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(2, 45, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(3, 53, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(4, 61, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(5, 69, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(6, 77, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(7, 85, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(8, 93, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(9, 101, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(10, 109, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(11, 117, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_age_strata(12, 125, OverlapCohortsCName, tableold = overlaplc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = BaseCohortsName,
@@ -673,22 +653,18 @@ names_final_cohorts <- rbind(names_final_cohorts,
 
 if(vaccine_data) {
   # Characterisation cohorts stratified by vaccination
-  do_overlap_vacc(1, 45, BaseCohortsName)
-  do_overlap_vacc(2, 47, BaseCohortsName)
-  do_overlap_vacc(3, 49, BaseCohortsName)
-  do_overlap_vacc(4, 51, BaseCohortsName)
-  do_overlap_vacc(1, 133, OverlapCohortsCName)
-  do_overlap_vacc(2, 135, OverlapCohortsCName)
-  do_overlap_vacc(3, 137, OverlapCohortsCName)
-  do_overlap_vacc(4, 139, OverlapCohortsCName)
-  do_overlap_vacc(5, 141, OverlapCohortsCName)
-  do_overlap_vacc(6, 143, OverlapCohortsCName)
-  do_overlap_vacc(7, 145, OverlapCohortsCName)
-  do_overlap_vacc(8, 147, OverlapCohortsCName)
-  do_overlap_vacc(9, 149, OverlapCohortsCName)
-  do_overlap_vacc(10, 151, OverlapCohortsCName)
-  do_overlap_vacc(11, 153, OverlapCohortsCName)
-  do_overlap_vacc(12, 155, OverlapCohortsCName)
+  overlaplc <- do_overlap_vacc(1, 133, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(2, 135, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(3, 137, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(4, 139, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(5, 141, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(6, 143, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(7, 145, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(8, 147, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(9, 149, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(10, 151, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(11, 153, OverlapCohortsCName, tableold = overlaplc)
+  overlaplc <- do_overlap_vacc(12, 155, OverlapCohortsCName, tableold = overlaplc)
   
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = BaseCohortsName,
@@ -729,22 +705,18 @@ if(vaccine_data) {
 }
 
 # Characterisation cohorts stratified by calendar period
-do_strata_calendar(1, 53, BaseCohortsName)
-do_strata_calendar(2, 55, BaseCohortsName)
-do_strata_calendar(3, 57, BaseCohortsName)
-do_strata_calendar(4, 59, BaseCohortsName)
-do_strata_calendar(1, 157, OverlapCohortsCName)
-do_strata_calendar(2, 159, OverlapCohortsCName)
-do_strata_calendar(3, 161, OverlapCohortsCName)
-do_strata_calendar(4, 163, OverlapCohortsCName)
-do_strata_calendar(5, 165, OverlapCohortsCName)
-do_strata_calendar(6, 167, OverlapCohortsCName)
-do_strata_calendar(7, 169, OverlapCohortsCName)
-do_strata_calendar(8, 171, OverlapCohortsCName)
-do_strata_calendar(9, 173, OverlapCohortsCName)
-do_strata_calendar(10, 175, OverlapCohortsCName)
-do_strata_calendar(11, 177, OverlapCohortsCName)
-do_strata_calendar(12, 179, OverlapCohortsCName)
+overlaplc <- do_strata_calendar(1, 157, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(2, 159, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(3, 161, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(4, 163, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(5, 165, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(6, 167, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(7, 169, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(8, 171, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(9, 173, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(10, 175, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(11, 177, OverlapCohortsCName, tableold = overlaplc)
+overlaplc <- do_strata_calendar(12, 179, OverlapCohortsCName, tableold = overlaplc)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = BaseCohortsName,
@@ -769,14 +741,32 @@ names_final_cohorts <- rbind(names_final_cohorts,
                                                           "Neg_PASC_Any_Delta", "Neg_PASC_Any_Omicron",
                                                           "Flu_PASC_Any_Delta", "Flu_PASC_Any_Omicron")))
 
+if(doTreatmentPatterns) {
+  overlaplc <- create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
+                 new_ids = c(181:212), tableName = OverlapCohortsCName, tableold = overlaplc)  
+
+  names_final_cohorts <- rbind(names_final_cohorts,
+                               dplyr::tibble(table_name = OverlapCohortsCName,
+                                             cohort_definition_id = c(181:212),
+                                             cohort_name = Initial_cohorts$cohort_name[68:99]))
+  
+}
+
+computeQuery(overlaplc, name = OverlapCohortsCName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                   PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName))
+
 # ---------------------------------------------------------------------
 # OVERLAPPING COHORTS INCIDENCE
 # Overlapping cohorts of single symptoms / events / medical conditions with base cohorts
 
+
 counter <- 1
 if(cdm[[LongCovidCohortsName]] %>% 
    dplyr::filter(cohort_definition_id == 1) %>% tally() %>% pull() > 5) {
-  do_overlap(cdm, 1, 1, counter, tableName = LongCovidCohortsName,
+  overlapip <- do_overlap(cdm, 1, 1, counter, tableName = LongCovidCohortsName,
              overlapTableName = OverlapCohortsIPName, first = TRUE)
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = OverlapCohortsIPName,
@@ -789,8 +779,8 @@ if(cdm[[LongCovidCohortsName]] %>%
   counter <- counter + 1
   
   for(i in c(2:4)) {
-    do_overlap(cdm, i, 1, counter, tableName = LongCovidCohortsName,
-               overlapTableName = OverlapCohortsIPName)
+    overlapip <- do_overlap(cdm, i, 1, counter, tableName = LongCovidCohortsName,
+               overlapTableName = OverlapCohortsIPName, tableold = overlapip)
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = OverlapCohortsIPName,
                                                cohort_definition_id = counter, 
@@ -805,8 +795,8 @@ for(i in base_ids) {
   for(j in outcome_ids){
     if(cdm[[LongCovidCohortsName]] %>% 
       dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
-      do_overlap(cdm, i, j, counter, tableName = LongCovidCohortsName,
-                 overlapTableName = OverlapCohortsIPName)
+      overlapip <- do_overlap(cdm, i, j, counter, tableName = LongCovidCohortsName,
+                 overlapTableName = OverlapCohortsIPName, tableold = overlapip)
       names_final_cohorts <- rbind(names_final_cohorts,
                                    dplyr::tibble(table_name = OverlapCohortsIPName,
                                                  cohort_definition_id = counter, 
@@ -821,8 +811,8 @@ for(i in base_ids) {
   for(j in outcome_ids){
     if(cdm[[PascCohortsName]] %>% 
       dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
-      do_overlap(cdm, i, j, counter, tableName = PascCohortsName,
-                 overlapTableName = OverlapCohortsIPName)
+      overlapip <- do_overlap(cdm, i, j, counter, tableName = PascCohortsName,
+                 overlapTableName = OverlapCohortsIPName, tableold = overlapip)
       names_final_cohorts <- rbind(names_final_cohorts,
                                    dplyr::tibble(table_name = OverlapCohortsIPName,
                                                  cohort_definition_id = counter, 
@@ -837,8 +827,8 @@ for(i in base_ids) {
   for(j in outcome_ids){
     if(cdm[[MedCondCohortsName]] %>% 
        dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
-      do_overlap(cdm, i, j, counter, tableName = MedCondCohortsName,
-                 overlapTableName = OverlapCohortsIPName)
+      overlapip <- do_overlap(cdm, i, j, counter, tableName = MedCondCohortsName,
+                 overlapTableName = OverlapCohortsIPName, tableold = overlapip)
       names_final_cohorts <- rbind(names_final_cohorts,
                                    dplyr::tibble(table_name = OverlapCohortsIPName,
                                                  cohort_definition_id = counter, 
@@ -847,6 +837,8 @@ for(i in base_ids) {
     counter <- counter + 1
   }
 }
+
+computeQuery(overlapip, name = OverlapCohortsIPName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
 
 if(vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
@@ -863,21 +855,7 @@ if(vaccine_data) {
 # -------------------------------------------------------------------
 # TREATMENT PATTERNS and HEALTHCARE UTILISATION COHORTS, TRAJ COHORT
 
-if(doTreatmentPatterns) {
-create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
-               new_ids = c(61:92), tableName = BaseCohortsName)
-create_outcome(cdm, window = c(68:99), filter_start = FALSE, first_event = FALSE,
-                 new_ids = c(181:212), tableName = OverlapCohortsCName)  
-names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(table_name = BaseCohortsName,
-                                           cohort_definition_id = c(61:92),
-                                           cohort_name = Initial_cohorts$cohort_name[68:99]))
-names_final_cohorts <- rbind(names_final_cohorts,
-                             dplyr::tibble(table_name = OverlapCohortsCName,
-                                           cohort_definition_id = c(181:212),
-                                           cohort_name = Initial_cohorts$cohort_name[68:99]))
 
-}
 
 if(doCharacterisation || doClustering) {
   # Get Healthcare Utilisation outcomes for characterisation and clustering

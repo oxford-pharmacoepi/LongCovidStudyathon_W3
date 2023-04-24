@@ -18,23 +18,14 @@ library(here)
 library(log4r)
 library(zip)
 library(poLCA)
-library(igraph)
-library(psych)
-library(MatchIt)
 library(purrr)
 library(ggplot2)
-library(IncidencePrevalence)
-library(lubridate)
 library(tibble)
 library(reshape2)
 library(readr)
 
 # install the following packages like this, with remotes 
 # library(remotes)
-# remotes::install_github("EHDEN/Trajectories")
-library(Trajectories)
-# remotes::install_github("OHDSI/DatabaseConnector")
-library(DatabaseConnector)
 # remotes::install_github("OHDSI/CirceR")
 library(CirceR)
 
@@ -95,30 +86,19 @@ study_start_date <- as.Date("2020-09-01")
 # Might not be applicable, otherwise set as latest_data_availability
 covid_end_date <- as.Date("...")
 
-# Start date of omicron variant, country specific
-omicron_start_date <- as.Date("...")
-
 # Latest data availability, to know until when to calculate incidences
 latest_data_availability <- as.Date("...") 
 
 # Decide which parts of the study you want to run 
 readInitialCohorts <- TRUE
 getStudyCohorts <- TRUE
-doIncidencePrevalence <- TRUE
-doCharacterisation <- TRUE
-doDrugUtilisation <- TRUE
-doTreatmentPatterns <- TRUE
 doClustering <- TRUE
-doTrajectories <- TRUE
 
 # Set to true or false for the following information for your database
 vaccine_data <- TRUE # Set to FALSE if you have no information on vaccination 
 # whatsoever - and thus cannot stratify by it
 vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination,
 # but not on vaccine brand
-
-# If you can only run Long Covid related analyses
-onlyLC <- FALSE
 
 # If you have some problems with dates in initial cohorts
 instantiate_diff <- FALSE

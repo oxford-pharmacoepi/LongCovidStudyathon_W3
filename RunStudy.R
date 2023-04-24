@@ -20,25 +20,16 @@ level(logger) <- "INFO"
 InitialCohortsName <- paste0(table_stem,"_initialcohorts")
 BaseCohortsName <- paste0(table_stem,"_basecohorts")
 LongCovidCohortsName <- paste0(table_stem,"_lccohorts")
-PascCohortsName <- paste0(table_stem,"_pasccohorts")
-MedCondCohortsName <- paste0(table_stem,"_mccohorts")
-OverlapCohortsCName <- paste0(table_stem,"_overlapccohorts")
-OverlapCohortsIPName <- paste0(table_stem,"_overlapipcohorts")
+OverlapCohortsName <- paste0(table_stem,"_overlapcohorts")
 HUCohortsName <- paste0(table_stem,"_hucohorts")
-TrajCohortsName <- paste0(table_stem,"_trajcohort")
-VaccCohortsName <- paste0(table_stem,"_vacccohorts")
+clusterCohortName <- paste0(table_stem,"_clustercohort")
 
 # Create vector with all names
 CohortNames <- c(InitialCohortsName, BaseCohortsName, LongCovidCohortsName,
-                 PascCohortsName, MedCondCohortsName, OverlapCohortsCName,
-                 OverlapCohortsIPName, HUCohortsName, TrajCohortsName,
-                 VaccCohortsName)
+                 OverlapCohortsName, HUCohortsName, VaccCohortsName, clusterCohortName)
 
 # get functions used throughout this study
 source(here::here("functions.R"))
-
-# Get TreatmentPatterns code
-devtools::load_all(here::here("TreatmentPatterns_code"))
 
 # Read initial cohorts
 if (readInitialCohorts){
@@ -61,67 +52,15 @@ if (readInitialCohorts){
 # Instantiate study cohorts
 if(getStudyCohorts) {
   info(logger, 'GETTING STUDY COHORTS')
-  if(onlyLC) {
-    source(here("2_StudyCohorts","GetStudyCohorts_onlyLC.R"), local = TRUE)
-  } else if(sql_server) {
-    source(here("2_StudyCohorts","GetStudyCohorts_sql.R"), local = TRUE)
-  } else {
-    source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
-  }
+  source(here("2_StudyCohorts","GetStudyCohorts.R"), local = TRUE)
   info(logger, 'GOT STUDY COHORTS')
-}
-
-# Objective 1: Incidence and Prevalence
-if(doIncidencePrevalence) {
-  info(logger, 'GETTING INCIDENCE AND PREVALENCE')
-  if(onlyLC) {
-    source(here("3_IncidencePrevalence","WP1_code_onlyLC.R"), local = TRUE)
-  } else {
-    source(here("3_IncidencePrevalence","WP1_code.R"), local = TRUE)
-  }
-  info(logger, 'GOT INCIDENCE AND PREVALENCE')
-}
-
-# Objective 2a: Characterisation
-if(doCharacterisation || doDrugUtilisation || doTreatmentPatterns) {
-  info(logger, 'DOING LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
-  if(onlyLC) {
-    source(here("4_Characterisation","WP2_code_onlyLC.R"), local = TRUE)
-  } else if(sql_server) {
-    source(here("4_Characterisation","WP2_code_sql.R"), local = TRUE)
-  } else {
-    source(here("4_Characterisation","WP2_code.R"), local = TRUE)
-  }
-  info(logger, 'FINISHED LARGE-SCALE CHARACTERISATION, DRUG UTILISATION AND/OR TREATMENT PATTERNS')
 }
 
 # Objective 3a: Clustering
 if(doClustering) {
   info(logger, 'PERFORMING LCA CLUSTERING AND NETWORK ANALYSIS')
-  if(sql_server) {
-    source(here("5_Clustering","WP3_code_sql.R"), local = TRUE)
-  } else {
-    source(here("5_Clustering","WP3_code.R"), local = TRUE)
-  }
+  source(here("3_Clustering","WP3_code.R"), local = TRUE)
   info(logger, 'FINISHED LCA CLUSTERING AND NETWORK ANALYSIS')
-}
-
-# Objective 3c: Trajectories
-if(doTrajectories) {
-  info(logger, 'STUDYING TRAJECTORIES')
-  source(here("6_Trajectories","Trajectories.R"), local = TRUE)
-  info(logger, 'FINISHED TRAJECTORIES')
-}
-
-# IP plots
-if(doIncidencePrevalence) {
-  info(logger, 'PLOTTING RESULTS')
-  if(onlyLC) {
-    source(here("7_Plots","plots_onlyLC.R"), local = TRUE)
-  } else {
-    source(here("7_Plots","plots.R"), local = TRUE)
-  }
-  info(logger, 'RESULTS PLOTTED')
 }
 
 zip::zip(zipfile = file.path(output.folder, paste0(zipName, ".zip")),

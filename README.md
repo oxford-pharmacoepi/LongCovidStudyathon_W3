@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Long Covid and PASC Studyathon - Study package
                                                                                       
 ## Package overview
@@ -39,3 +40,6 @@ tested against those types of database engines, so you might have to set it as `
 The package does offer some visualisations, which you can check in your final
 .zip file, but these are mainly orientative, to check it has worked well. 
 Further plots will be done after receipt of raw outputs.
+=======
+# LongCovidStudyathon_W3
+>>>>>>> e59b3bd878c7fc216cfde9922dbeb3f1d6ea8312

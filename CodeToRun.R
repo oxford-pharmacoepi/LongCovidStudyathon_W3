@@ -55,26 +55,8 @@ db <- dbConnect("...",
                 user = user, 
                 password = password)
 
-# sql dialect used with the OHDSI SqlRender package
-targetDialect <- "..." 
-
-# Create connection details "OHDSI way" for some packages
-server <- Sys.getenv("...")
-connectionDetails <- DatabaseConnector::downloadJdbcDrivers(targetDialect, here::here())
-connectionDetails <- DatabaseConnector::createConnectionDetails(
-  dbms = targetDialect,
-  server = server,
-  user = user,
-  password = password,
-  port = port,
-  pathToDriver = here::here())
-
 # Name of the schema with the patient-level data
 cdm_database_schema <- "..."
-
-# Name of the schema with the vocabulary, usually the same as the patient-level
-# data schema
-vocabulary_database_schema <- cdm_database_schema
 
 # Name of the schema where the result table will be created
 results_database_schema <- "..."

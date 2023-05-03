@@ -33,7 +33,7 @@ newinf_init <- cdm[[InitialCohortsName]] %>%
   ) %>% compute() 
 
 covid <- do_exclusion(cdm, newinf_init, id = 1,
-                      S_start_date = study_start_date, covidcensor = FALSE)
+                      S_start_date = study_start_date)
   
 # New infection "final": inclusion/exclusion
 new_infection <- covid[[1]]
@@ -80,15 +80,14 @@ message("Getting outcome cohorts")
 info(logger, '-- Getting outcome cohorts')
 
 # Long covid symptoms
-lcsymp <- create_outcome(cdm, window = c(2:26), filter_start = FALSE, first_event = FALSE, 
-               new_ids = c(1:25), tableName = LongCovidCohortsName)
+lcsymp <- create_outcome(cdm, window = c(2:26), new_ids = c(1:25), tableName = LongCovidCohortsName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
                                            cohort_definition_id = c(1:25),
                                            cohort_name = Initial_cohorts$cohort_name[2:26]))
 # LC code
-lccode <- create_outcome(cdm, window = 31, new_ids = 26, tableName = LongCovidCohortsName)
+lccode <- create_outcome(cdm, window = 32, new_ids = 26, tableName = LongCovidCohortsName)
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
@@ -115,7 +114,7 @@ info(logger, '-- Getting strata cohorts')
 if(vaccine_data && db.name != "CPRDGold") {
   if(vaccine_brand) {
     vaccinated <- cdm[[InitialCohortsName]] %>%
-      dplyr::filter(.data$cohort_definition_id %in% c(27:30)) %>%
+      dplyr::filter(.data$cohort_definition_id %in% c(27:29,31)) %>%
       dplyr::select(
         "subject_id",
         "cohort_start_date",
@@ -344,74 +343,66 @@ if(vaccine_data && db.name != "CPRDGold") {
 # OVERLAPPING COHORTS
 # Overlapping cohorts of single symptoms with base cohorts
 
-counter <- 1
 if(cdm[[LongCovidCohortsName]] %>% 
    dplyr::filter(cohort_definition_id == 1) %>% tally() %>% pull() > 5) {
-  overlapip <- do_overlap(cdm, 1, 1, counter, tableName = LongCovidCohortsName,
-                          overlapTableName = OverlapCohortsName, first = TRUE, tableold = bases)
-  names_final_cohorts <- rbind(names_final_cohorts,
-                               dplyr::tibble(table_name = OverlapCohortsName,
-                                             cohort_definition_id = counter, 
-                                             cohort_name =paste0("Base_",1,"_LC_outcome_",1) ))
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,OverlapCohortsCName,
-                                     OverlapCohortsName))
+  overlapip <- do_overlap(cdm, 1, 1, 1, tableName = LongCovidCohortsName)
 }
-
-counter <- counter + 1
-
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsName,
+                                           cohort_definition_id = 1, 
+                                           cohort_name =paste0("Inf_",Initial_cohorts$cohort_name[2])))
 
 base_ids <- c(1)
-outcome_ids <- c(2:26)
+outcome_ids <- c(2:25)
 for(i in base_ids) {
   for(j in outcome_ids){
+    
+    names_final_cohorts <- rbind(names_final_cohorts,
+                                 dplyr::tibble(table_name = OverlapCohortsName,
+                                               cohort_definition_id = j, 
+                                               cohort_name = paste0("Inf_",Initial_cohorts$cohort_name[j+1])))
     if(cdm[[LongCovidCohortsName]] %>% 
       dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
-      overlapip <- do_overlap(cdm, i, j, counter, tableName = LongCovidCohortsName,
-                              overlapTableName = OverlapCohortsName, tableold = overlapip)
-      names_final_cohorts <- rbind(names_final_cohorts,
-                                   dplyr::tibble(table_name = OverlapCohortsName,
-                                                 cohort_definition_id = counter, 
-                                                 cohort_name =paste0("Base_",i,"_LC_outcome_",j) ))
+      overlapip_w <- do_overlap(cdm, i, j, j, tableName = LongCovidCohortsName)
+      overlapip <- dplyr::union_all(overlapip, overlapip_w)
     }
-    counter <- counter + 1
   }
 }
+
+if(cdm[[LongCovidCohortsName]] %>% 
+   dplyr::filter(cohort_definition_id == 26) %>% tally() %>% pull() > 5) {
+  overlapip <- do_overlap(cdm, 1, 26, 26, tableName = LongCovidCohortsName)
+}
+names_final_cohorts <- rbind(names_final_cohorts,
+                             dplyr::tibble(table_name = OverlapCohortsName,
+                                           cohort_definition_id = 26, 
+                                           cohort_name =paste0("Inf_",Initial_cohorts$cohort_name[32])))
 
 computeQuery(ovelapip, name = OverlapCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
 
 if(vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,VaccCohortsName,
-                                     OverlapCohortsCName,OverlapCohortsName))
+                                     VaccCohortsName,OverlapCohortsName))
 } else {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                     cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     PascCohortsName,MedCondCohortsName,
-                                     OverlapCohortsCName,OverlapCohortsName))
+                                     OverlapCohortsName))
 }
 
 # -------------------------------------------------------------------
-# TREATMENT PATTERNS and HEALTHCARE UTILISATION COHORTS, TRAJ COHORT
+# HEALTHCARE UTILISATION COHORTS
+  # Get Healthcare Utilisation outcomes for clustering
+hucohorts <- cdm[[InitialCohortsName]] %>%
+  dplyr::filter(cohort_definition_id %in% c(33:36))
+  
+computeQuery(hucohorts, name = HUCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
 
-if(doCharacterisation || doClustering) {
-  # Get Healthcare Utilisation outcomes for characterisation and clustering
-  HU_cohorts <- CDMConnector::readCohortSet(here::here("4_Characterisation","HU_cohorts"))
-  cdm <- CDMConnector::generateCohortSet(cdm, HU_cohorts,
-                                         name = HUCohortsName,
-                                         overwrite = TRUE)
-  cdm[[HUCohortsName]] <- cdm[[HUCohortsName]] %>% left_join(observation_death, 
-                                                             by = c("subject_id")) %>%
-    dplyr::mutate(cohort_end_date = !!CDMConnector::asDate(ifelse(!is.na(.data$death_date) & .data$observation_period_end_date > .data$death_date, .data$death_date, .data$observation_period_end_date))) %>%
-    compute()
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = HUCohortsName,
                                              cohort_definition_id = c(1:4),
-                                             cohort_name = HU_cohorts$cohort_name[1:4]))
+                                             cohort_name = Initial_cohorts$cohort_name[33:36]))
   
-}
 
 # --------------------------------------------------------------------
 # Print counts of all cohorts (if >5) 
@@ -462,7 +453,7 @@ write_csv(names_final_cohorts,
 )
 
 # ------------------------------------------------------------------------------
-# GET cohort for clustering: subject_id, symptoms (1 or 0), age and sex
+# GET cohort for clustering: subject_id, symptoms (1 or 0), age, sex, HU characteristics, co-morbidities, vaccination
 
 # First get all people with LC symptoms (overlap with infection cohort at base)
 symptoms_LC <- cdm[[OverlapCohortsName]] %>% 
@@ -473,8 +464,8 @@ names_symptoms <- names_final_cohorts %>%
   dplyr::filter(.data$cohort_definition_id %in% c(1:26)) %>%
   dplyr::select(cohort_definition_id, cohort_name) %>% compute()
 
-symptoms_LC <- symptoms_LC %>% addAge(cdm) %>% 
-  addSex(cdm) %>% collect()
+symptoms_LC <- symptoms_LC %>% addDemographics(cdm, futureObservation = FALSE, priorHistory = FALSE) %>% 
+  collect()
 symptoms_LC <- symptoms_LC %>% 
   dplyr::left_join(names_symptoms, 
                    by = c("cohort_definition_id")) %>% 
@@ -503,14 +494,18 @@ for(i in 2:length(names_symptoms)) {
   
 }
 data_LCA[is.na(data_LCA)] <- 0
+for(n in names_symptoms) {
+  if(!(n %in% colnames(data_LCA))) {
+    n <- enquo(n)
+    data_LCA <- data_LCA %>% 
+      dplyr::mutate(!!n := c(0))
+  }
+}
 data_LCA <- data_LCA %>% distinct()
 data_LCA <- data_LCA %>% dplyr::left_join(symptoms_LC %>% 
                                             dplyr::select(subject_id,age,sex), 
                                           by = "subject_id") %>%
   distinct()
-
-# Put column names well!
-
 
 # Characterisation of the cluster people
 cdm[["visit_occurrence"]] <- cdm[["visit_occurrence"]] %>%
@@ -526,15 +521,15 @@ ip.codes.w.desc <- cdm$concept_ancestor %>%
   dplyr::distinct() %>% 
   pull()
 
-cohort_LC <- cohort_LC %>% 
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 1), c(-365,-1), "number_icu") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 2), c(-365,-1), "number_vent") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 3), c(-365,-1), "number_trach") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 4), c(-365,-1), "number_ecmo") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 1), c(1, 30), "number_icu_next") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 2), c(1, 30), "number_vent_next") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 3), c(1, 30), "number_trach_next") %>%
-  addNumberEvent(cdm, HUCohortsName, list(cohort_definition_id = 4), c(1, 30), "number_ecmo_next") %>%
+data_LCA <- data_LCA %>% 
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 1, window = list(c(-365, -1)), nameStyle = "number_icu") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 2, window = list(c(-365, -1)), nameStyle = "number_vent") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 3, window = list(c(-365, -1)), nameStyle = "number_trach") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 4, window = list(c(-365, -1)), nameStyle = "number_ecmo") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 1, window = list(c(1, 30)), nameStyle = "number_icu_next") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 2, window = list(c(1, 30)), nameStyle = "number_vent_next") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 3, window = list(c(1, 30)), nameStyle = "number_trach_next") %>%
+  addCohortIntersectCount(cdm, targetCohortTable = HUCohortsName, targetCohortId = 4, window = list(c(1, 30)), nameStyle = "number_ecmo_next") %>%
   addNumberVisit(cdm, 9202, c(-365,-1), name = "number_gp_bef") %>% 
   addNumberVisit(cdm, 9202, c(1, 30), name = "number_gp_next") %>% 
   addNumberVisit(cdm, ip.codes.w.desc, c(-365,-1), name = "number_hosp_bef") %>% 
@@ -545,7 +540,7 @@ cohort_set <- tibble(
   ancestor_concept_id = c(
     434621, 317009, 443392, 201820, 321588, 316866, 4030518, 255573, 4182210
   ),
-  cohort_definition_id = 1:9,
+  cohort_definition_id = c(1:9),
   cohort_name = c(
     "autoimmune_disease", "asthma", "malignant_neoplastic_disease",
     "diabetes_mellitus", "heart_disease", "hypertensive_disorder",
@@ -566,16 +561,16 @@ for(i in c(1:9)) {
   name_col <- cohort_set$cohort_name[i]
   name_col <- rlang::enquo(name_col)
   
-  cohort_LC <- cohort_LC %>% 
-    addNumberEvent_in(cdm, "condition_occurrence", window = c(NA,-1), filter = list(condition_concept_id = ip.codes.w.desc), eventDate = "condition_start_date", name = cohort_set$cohort_name[i]) %>%
+  data_LCA <- data_LCA %>% 
+    addNumberEvent_in(cdm, "condition_occurrence", window = c(-Inf,-1), filter = list(condition_concept_id = ip.codes.w.desc), eventDate = "condition_start_date", name = cohort_set$cohort_name[i]) %>%
     compute()
 }
 
 if(vaccine_data) {
-  cohort_LC <- cohort_LC %>% 
-    addOverlap(cdm, VaccCohortsName, 3, "first_dose") %>% 
-    addOverlap(cdm, VaccCohortsName, 4, "second_dose") %>% 
-    addOverlap(cdm, VaccCohortsName, 5, "third_dose") %>% 
+  data_LCA <- data_LCA %>% 
+    addCohortIntersectFlag(cdm, targetCohortTable = VaccCohortsName, targetCohortId = 3, window = list(c(-Inf, -1)), nameStyle = "first_dose") %>%
+    addCohortIntersectFlag(cdm, targetCohortTable = VaccCohortsName, targetCohortId = 4, window = list(c(-Inf, -1)), nameStyle = "second_dose") %>%
+    addCohortIntersectFlag(cdm, targetCohortTable = VaccCohortsName, targetCohortId = 5, window = list(c(-Inf, -1)), nameStyle = "third_dose") %>%
     compute()
 }
 

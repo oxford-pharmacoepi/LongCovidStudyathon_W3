@@ -33,44 +33,49 @@ names_symptoms <- names_final_cohorts %>%
 
 # Use package polCA
 # Fit latent class model
-mydata <- cdm[[clusterCohortName]]
+mydata <- cdm[[clusterCohortName]] %>%
+  dplyr::select(subject_id, dplyr::all_of(names_symptoms), age, sex)
 mydata[,2:(ncol(mydata)-2)] <- mydata[,2:(ncol(mydata)-2)] + 1 
 # needed for poLCA, now 0 (no symptom) is 1, and 1 (symptom) is 2. Not do that in age or sex or subject_id
+
 # the following is just to create variables that can be read by the formula of LCA
-n_s <- names_symptoms
-for(i in 1:length(names_symptoms)) {
-  n_s[i] = paste0("LC_",i)
-}
-n_s <- append(n_s,"age")
-n_s <- append(n_s,"sex")
-colnames(mydata) <- c("subject_id",n_s)
+#n_s <- names_symptoms
+#for(i in 1:length(names_symptoms)) {
+#  n_s[i] = paste0("LC_",i)
+#}
+#n_s <- append(n_s,"age")
+#n_s <- append(n_s,"sex")
+#colnames(mydata) <- c("subject_id",n_s)
 
 # Get the expression of the function for LCA depending on the number of variables available in the dataset
-cols <- "cbind("
-for(i in 1:length(names_symptoms)) {
-  cols <- paste0(cols,colnames(mydata)[i+1],",")
-}
-cols <- substr(cols, 1, nchar(cols)-1)
-cols <- paste0(cols,")")
+#cols <- "cbind("
+#for(i in 1:length(names_symptoms)) {
+#  cols <- paste0(cols,colnames(mydata)[i+1],",")
+#}
+#cols <- substr(cols, 1, nchar(cols)-1)
+#cols <- paste0(cols,")")
+
 x_vars <- c("1", "age", "sex")
+
+cols <- paste0("cbind(", paste(names_symptoms, collapse = ","), ")")
 
 f <- with(mydata, as.formula(sprintf("%s ~ %s", cols, paste(x_vars, collapse = " + "))))
 
 results <- list()
-entropy <- function (p) sum(-p*log(p))
+entropy <- function(p) sum(-p*log(p))
 
 # Run a sequence of models with 2-7 classes and print out the model with the lowest BIC
 run_clustering <- function(numclust, numsymp, counter) {
   
   # Get people with more than the required number of clusters
-  mydata <- mydata %>% 
+  working_data <- mydata %>% 
     dplyr::mutate(number = sum(dplyr::all_of(names_symptoms))) %>%
     dplyr::filter(number >= numsymp) %>%
     dplyr::select(-number)
     compute()
     
-  if(mydata %>% tally() > 499) {
-    lc <- poLCA(f, mydata, nclass=numclust, maxiter=2000, graphs = FALSE,
+  if(working_data %>% tally() > 499) {
+    lc <- poLCA(f, working_data, nclass=numclust, maxiter=2000, graphs = FALSE,
                 tol=1e-5, na.rm=FALSE,  
                 nrep=100, verbose=TRUE, calc.se=FALSE)
     
@@ -126,8 +131,8 @@ run_clustering <- function(numclust, numsymp, counter) {
     # Include horizontal lines with Prevalence of each symptom in all patients
     # List prevalence values (range from 0 to 1)
     # Transform back (1,2) to (0,1) binary
-    mydata[,2:(ncol(mydata)-2)] <- mydata[,2:(ncol(mydata)-2)] -1 
-    factors <- (colSums(mydata[,2:(ncol(mydata)-2)]))/(length(mydata[[1]]))	
+    working_data[,2:(ncol(working_data)-2)] <- working_data[,2:(ncol(working_data)-2)] -1 
+    factors <- (colSums(working_data[,2:(ncol(working_data)-2)]))/(length(working_data[[1]]))	
     factors <- as.matrix(factors)
     rownames(factors) <- names_symptoms
     factors <- factors[order(rownames(factors)),]
@@ -146,12 +151,12 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     # Characterise clusters
     # Look at characterisation of clusters: age and sex
-    mydata <- mydata %>% mutate(cluster_assignment = lc$predclass)
-    clusters_age <- mydata %>%
+    working_data <- working_data %>% mutate(cluster_assignment = lc$predclass)
+    clusters_age <- working_data %>%
       dplyr::group_by(cluster_assignment) %>%
       dplyr::summarise(mean_age = mean(age),
                        sd_age = sd(age))
-    clusters_sex <- mydata %>%
+    clusters_sex <- working_data %>%
       dplyr::mutate(sex_male = ifelse(sex == "Male", 1, 0)) %>%
       dplyr::mutate(sex_female = ifelse(sex == "Female", 1, 0)) %>%
       dplyr::mutate(count = 1) %>%
@@ -174,7 +179,7 @@ run_clustering <- function(numclust, numsymp, counter) {
     )
     
     # Look at number of people with symptom per cluster
-    number_people <- mydata %>% dplyr::select(-c(age,sex,subject_id)) 
+    number_people <- working_data %>% dplyr::select(-c(age,sex,subject_id)) 
     for(i in 1:numclust) {
       clust <- apply(number_people %>% dplyr::filter(cluster_assignment == i) %>% dplyr::select(-cluster_assignment), 2, sum)
       write.csv(
@@ -184,8 +189,11 @@ run_clustering <- function(numclust, numsymp, counter) {
       )
     }
     
+    working_data <- working_data %>%
+      dplyr::left_join(cdm[[clusterCohortName]], by ="subject_id")
+    
     # Healthcare utilisation outcomes  
-    HU_summary <- mydata %>%
+    HU_summary <- working_data %>%
       dplyr::group_by(cluster_assignment) %>%
       dplyr::select(dplyr::starts_with(c("number"))) %>%
       dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
@@ -199,9 +207,9 @@ run_clustering <- function(numclust, numsymp, counter) {
     )
     
     # Comorbidities
-    com_summary <- mydata %>%
+    com_summary <- working_data %>%
       dplyr::select(cohort_set$cohort_name) %>% collect()
-    clust_com <- mydata %>% 
+    clust_com <- working_data %>% 
       dplyr::select(cluster_assignment) %>% collect()
     com_summary <- com_summary %>% dplyr::select(-cluster_assignment)
     com_summary[com_summary > 0] <- 1
@@ -219,7 +227,7 @@ run_clustering <- function(numclust, numsymp, counter) {
     )
     
     # Vaccination status
-    vacc_char <- mydata %>% 
+    vacc_char <- working_data %>% 
       dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
       dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
       compute()

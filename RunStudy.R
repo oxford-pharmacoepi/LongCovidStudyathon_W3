@@ -21,6 +21,7 @@ InitialCohortsName <- paste0(table_stem,"_initialcohorts")
 BaseCohortsName <- paste0(table_stem,"_basecohorts")
 LongCovidCohortsName <- paste0(table_stem,"_lccohorts")
 OverlapCohortsName <- paste0(table_stem,"_overlapcohorts")
+VaccCohortsName <- paste0(table_stem,"_vacccohorts")
 HUCohortsName <- paste0(table_stem,"_hucohorts")
 clusterCohortName <- paste0(table_stem,"_clustercohort")
 

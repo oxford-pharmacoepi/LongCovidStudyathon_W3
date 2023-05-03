@@ -23,6 +23,7 @@ library(ggplot2)
 library(tibble)
 library(reshape2)
 library(readr)
+library(PatientProfiles)
 
 # install the following packages like this, with remotes 
 # library(remotes)

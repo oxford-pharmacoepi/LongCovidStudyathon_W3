@@ -17,7 +17,6 @@ library(CDMConnector)
 library(here)
 library(log4r)
 library(zip)
-library(poLCA)
 library(purrr)
 library(ggplot2)
 library(tibble)
@@ -29,8 +28,10 @@ library(PatientProfiles)
 # library(remotes)
 # remotes::install_github("OHDSI/CirceR")
 library(CirceR)
+# remotes::install_github("oxford-pharmacoepi/poLCA_oxf")
+library(poLCA)
 
-# Database name or acronym (e.g. for CPRD AURUM use "CPRUAurum")
+# Database name or acronym (e.g. for CPRD AURUM use "CPRDAurum")
 db.name <- "..."
 
 # Name of the output folder to save the results. Change to "output" or any other
@@ -85,9 +86,6 @@ vaccine_brand <- TRUE # Set to FALSE if you do have information on vaccination,
 
 # If you have some problems with dates in initial cohorts
 instantiate_diff <- FALSE
-
-# If your database engine is SQL Server
-sql_server <- FALSE
 
 # Run the study
 source(here("RunStudy.R"))

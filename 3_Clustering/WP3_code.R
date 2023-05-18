@@ -1,16 +1,9 @@
 # Clustering 
 
-if(vaccine_data) {
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     VaccCohortsName,OverlapCohortsName, HUCohortsName),
-                    cdm.name = db.name)
-} else {
-  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
-                                     OverlapCohortsName, HUCohortsName),
-                    cdm.name = db.name)
-}
+  cdm <- cdm_from_con(db, cdm_database_schema, write_schema = results_database_schema,
+                    cohort_tables = c(clusterCohortName),
+                    cdm_name = db.name)
+
 
 names_final_cohorts <- read.csv(file.path(tempDir,paste0(db.name,"_cohorts.csv")))
 
@@ -26,34 +19,26 @@ if (!file.exists(output_clustering)){
 
 info(logger, '-- Calculating LCA clustering')
 
-names_symptoms <- names_final_cohorts %>% 
-  dplyr::filter(.data$table_name == LongCovidCohortsName) %>%
-  dplyr::filter(.data$cohort_definition_id %in% c(1:26)) %>%
-  dplyr::select(cohort_definition_id, cohort_name) %>% compute()
+names_symptoms <- Initial_cohorts$cohort_name[c(2:26,32)]
+cohort_set <- tibble(
+  ancestor_concept_id = c(
+    434621, 317009, 443392, 201820, 321588, 316866, 4030518, 255573, 4182210
+  ),
+  cohort_definition_id = c(1:9),
+  cohort_name = c(
+    "autoimmune_disease", "asthma", "malignant_neoplastic_disease",
+    "diabetes_mellitus", "heart_disease", "hypertensive_disorder",
+    "renal_impairment", "copd", "dementia"
+  )
+)
 
 # Use package polCA
 # Fit latent class model
 mydata <- cdm[[clusterCohortName]] %>%
-  dplyr::select(subject_id, dplyr::all_of(names_symptoms), age, sex)
+  dplyr::select(subject_id, dplyr::all_of(names_symptoms), age, sex) %>% 
+  dplyr::collect()
 mydata[,2:(ncol(mydata)-2)] <- mydata[,2:(ncol(mydata)-2)] + 1 
 # needed for poLCA, now 0 (no symptom) is 1, and 1 (symptom) is 2. Not do that in age or sex or subject_id
-
-# the following is just to create variables that can be read by the formula of LCA
-#n_s <- names_symptoms
-#for(i in 1:length(names_symptoms)) {
-#  n_s[i] = paste0("LC_",i)
-#}
-#n_s <- append(n_s,"age")
-#n_s <- append(n_s,"sex")
-#colnames(mydata) <- c("subject_id",n_s)
-
-# Get the expression of the function for LCA depending on the number of variables available in the dataset
-#cols <- "cbind("
-#for(i in 1:length(names_symptoms)) {
-#  cols <- paste0(cols,colnames(mydata)[i+1],",")
-#}
-#cols <- substr(cols, 1, nchar(cols)-1)
-#cols <- paste0(cols,")")
 
 x_vars <- c("1", "age", "sex")
 
@@ -61,18 +46,23 @@ cols <- paste0("cbind(", paste(names_symptoms, collapse = ","), ")")
 
 f <- with(mydata, as.formula(sprintf("%s ~ %s", cols, paste(x_vars, collapse = " + "))))
 
-results <- list()
 entropy <- function(p) sum(-p*log(p))
+
+mydata$sumrow <- rowSums(mydata %>% dplyr::select(dplyr::all_of(names_symptoms)), na.rm = TRUE) - 26
+results <- list()
 
 # Run a sequence of models with 2-7 classes and print out the model with the lowest BIC
 run_clustering <- function(numclust, numsymp, counter) {
   
+  output_clustering_w <- file.path(tempDir,"Clustering",paste0(numclust,"_clust_",numsymp,"_symp"))
+  if (!file.exists(output_clustering_w)){
+    dir.create(output_clustering_w, recursive = TRUE)}
+  
+  
   # Get people with more than the required number of clusters
   working_data <- mydata %>% 
-    dplyr::mutate(number = sum(dplyr::all_of(names_symptoms))) %>%
-    dplyr::filter(number >= numsymp) %>%
-    dplyr::select(-number)
-    compute()
+    dplyr::filter(sumrow >= numsymp) %>%
+    computeQuery()
     
   if(working_data %>% tally() > 499) {
     lc <- poLCA(f, working_data, nclass=numclust, maxiter=2000, graphs = FALSE,
@@ -105,7 +95,7 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     write.csv(
       lc[["prob"]],
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_probs.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_probs.csv")),
       row.names = FALSE
     )
     
@@ -131,15 +121,15 @@ run_clustering <- function(numclust, numsymp, counter) {
     # Include horizontal lines with Prevalence of each symptom in all patients
     # List prevalence values (range from 0 to 1)
     # Transform back (1,2) to (0,1) binary
-    working_data[,2:(ncol(working_data)-2)] <- working_data[,2:(ncol(working_data)-2)] -1 
-    factors <- (colSums(working_data[,2:(ncol(working_data)-2)]))/(length(working_data[[1]]))	
+    working_data[,2:(ncol(working_data)-3)] <- working_data[,2:(ncol(working_data)-3)] -1 
+    factors <- (colSums(working_data[,2:(ncol(working_data)-3)]))/(length(working_data[[1]]))	
     factors <- as.matrix(factors)
     rownames(factors) <- names_symptoms
     factors <- factors[order(rownames(factors)),]
     
     write.csv(
       factors,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_average.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_average.csv")),
       row.names = FALSE
     )
     
@@ -147,14 +137,14 @@ run_clustering <- function(numclust, numsymp, counter) {
     for (i in 1:length(factors)) {
       zp1 <- zp1 + geom_segment(x = (i - 0.5), y = factors[[i]], xend = (i + 0.5), yend = factors[[i]])
     }
-    ggsave(here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_figure.csv")))
+    ggsave(here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_figure.jpg")))
     
     # Characterise clusters
     # Look at characterisation of clusters: age and sex
     working_data <- working_data %>% mutate(cluster_assignment = lc$predclass)
     clusters_age <- working_data %>%
       dplyr::group_by(cluster_assignment) %>%
-      dplyr::summarise(mean_age = mean(age),
+      dplyr::summarise(median_age = median(age),
                        sd_age = sd(age))
     clusters_sex <- working_data %>%
       dplyr::mutate(sex_male = ifelse(sex == "Male", 1, 0)) %>%
@@ -174,35 +164,35 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     write.csv(
       clusters_sex,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_sex.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_sex.csv")),
       row.names = FALSE
     )
     
     # Look at number of people with symptom per cluster
-    number_people <- working_data %>% dplyr::select(-c(age,sex,subject_id)) 
+    number_people <- working_data %>% dplyr::select(-c(age,sex,subject_id,sumrow)) 
     for(i in 1:numclust) {
       clust <- apply(number_people %>% dplyr::filter(cluster_assignment == i) %>% dplyr::select(-cluster_assignment), 2, sum)
       write.csv(
         clust,
-        file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_clust_",i,".csv")),
+        file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_clust_",i,".csv")),
         row.names = TRUE
       )
     }
-    
+
     working_data <- working_data %>%
-      dplyr::left_join(cdm[[clusterCohortName]], by ="subject_id")
+      dplyr::left_join(cdm[[clusterCohortName]], by =c("subject_id"), copy = TRUE)
     
     # Healthcare utilisation outcomes  
     HU_summary <- working_data %>%
       dplyr::group_by(cluster_assignment) %>%
       dplyr::select(dplyr::starts_with(c("number"))) %>%
-      dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum))) %>%
+      dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum), na.rm = TRUE)) %>%
       dplyr::arrange(cluster_assignment) %>%
-      compute()
+      computeQuery()
     
     write.csv(
       HU_summary,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_HU.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_HU.csv")),
       row.names = FALSE
     )
     
@@ -211,18 +201,17 @@ run_clustering <- function(numclust, numsymp, counter) {
       dplyr::select(cohort_set$cohort_name) %>% collect()
     clust_com <- working_data %>% 
       dplyr::select(cluster_assignment) %>% collect()
-    com_summary <- com_summary %>% dplyr::select(-cluster_assignment)
     com_summary[com_summary > 0] <- 1
     
     com_summary <- cbind(com_summary, clust_com) %>%
       group_by(cluster_assignment) %>%
-      dplyr::summarise(across(everything(), list(sum = sum))) %>%
+      dplyr::summarise(across(everything(), list(sum = sum), na.rm = TRUE)) %>%
       dplyr::arrange(cluster_assignment) %>%
-      compute()
+      computeQuery()
     
     write.csv(
       com_summary,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_comorbidities.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_comorbidities.csv")),
       row.names = FALSE
     )
     
@@ -230,30 +219,29 @@ run_clustering <- function(numclust, numsymp, counter) {
     vacc_char <- working_data %>% 
       dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
       dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
-      compute()
+      computeQuery()
     
     vacc_counts <- vacc_char %>% 
       dplyr::group_by(cluster_assignment, dose) %>% tally() %>%
-      compute()
+      computeQuery()
     
     write.csv(
       vacc_counts,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_vaccination.csv"))
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_vaccination.csv"))
     )
-    
-    counter <- counter + 1
   }
-  
+  return(results)
 }
 
 counter <- 1
 for(nc in c(2:7)) { # 2 to 7 clusters
   for(ns in c(1:3)) { # 1 to 3 number of symptoms
-    run_clustering(nc,ns,counter)
+    results <- run_clustering(nc,ns,counter)
+    counter <- counter + 1
   }
 }
 
-results <- bindRows(results)
+results <- bind_rows(results)
 results2 <- tidyr::gather(results,Criteria,Value,5:9)
 
 # Plots with information criteria results for all models tried (one per # symptoms)
@@ -275,7 +263,7 @@ for(i in c(1:3)) {
           legend.text=  element_text(size=16),
           axis.line = element_line(colour = "black")) 
   
-  ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",numsymp,"_IC.jpg")))
+  ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
   
 }
 

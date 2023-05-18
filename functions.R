@@ -35,7 +35,7 @@ addNumberVisit <- function(x, cdm, id_visit, window = c(NA, NA), name = "number_
   }
 }
 
-addNumberEvent_in <- function(x, cdm, eventTableName, filter = NULL, window = c(NA, NA), name = "number_event", eventAt = "cohort_start_date", eventDate = "cohort_start_date", compute = TRUE) {
+addFlagEvent_in <- function(x, cdm, eventTableName, filter = NULL, window = c(NA, NA), name = "number_event", eventAt = "cohort_start_date", eventDate = "cohort_start_date", compute = TRUE) {
   events <- cdm[[eventTableName]]
   if (!is.null(filter)) {
     namesFilter <- names(filter)
@@ -78,7 +78,7 @@ addNumberEvent_in <- function(x, cdm, eventTableName, filter = NULL, window = c(
     ) %>%
     dplyr::mutate(dplyr::across(
       dplyr::all_of(name), 
-      ~ dplyr::if_else(is.na(.x), 0, .x)
+      ~ dplyr::if_else(is.na(.x), 0, 1)
     )) %>%
     dplyr::select(dplyr::all_of(c(colnames(x), name))) 
   if (isTRUE(compute)) {

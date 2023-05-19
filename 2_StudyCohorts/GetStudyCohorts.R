@@ -175,7 +175,10 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       computeQuery()
     
-    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_first)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)
     
     computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
     
@@ -245,7 +248,10 @@ if(vaccine_data && db.name != "CPRDGold") {
       dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
       computeQuery()
     
-    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+    vacc_all <- dplyr::union_all(vaccinated, nonvaccinated)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_first)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
+    vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)    
     
     computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
     
@@ -327,7 +333,10 @@ if(vaccine_data && db.name != "CPRDGold") {
     dplyr::select(subject_id,cohort_definition_id,cohort_start_date,cohort_end_date) %>%
     computeQuery()
   
-  vacc_all <- dplyr::union_all(vaccinated, nonvaccinated, vaccinated_first, vaccinated_second, vaccinated_third)
+  vacc_all <- dplyr::union_all(vaccinated, nonvaccinated)
+  vacc_all <- dplyr::union_all(vacc_all, vaccinated_first)
+  vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
+  vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)
   
   computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
   

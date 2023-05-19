@@ -65,9 +65,9 @@ run_clustering <- function(numclust, numsymp, counter) {
     computeQuery()
     
   if(working_data %>% tally() > 499) {
-    lc <- poLCA(f, working_data, nclass=numclust, maxiter=2000, graphs = FALSE,
+    lc <- poLCA_oxf(f, working_data, nclass=numclust, maxiter=2000, graphs = FALSE,
                 tol=1e-5, na.rm=FALSE,  
-                nrep=100, verbose=TRUE, calc.se=FALSE)
+                nrep=50, verbose=TRUE, calc.se=FALSE)
     
     # nrep, maxiter or the number of classes can be tuned later on if for some databases convergence or IC output does not look right
     
@@ -88,30 +88,35 @@ run_clustering <- function(numclust, numsymp, counter) {
                                          BIC= lc$bic,
                                          ABIC=  (-2*lc$llik) + ((log((lc$N + 2)/24)) * lc$npar),
                                          CAIC = (-2*lc$llik) + lc$npar * (1 + log(lc$N)), 
-                                         likelihood_ratio=lc$Gsq,
                                          entropy = round(((error_prior-error_post) / error_prior),3),
                                          mean_posterior = numerator/denominator*100)
     
     
     write.csv(
-      lc[["prob"]],
+      lc[["probs"]],
       file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_probs.csv")),
+      row.names = FALSE
+    )
+    write.csv(
+      lc[["P"]],
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_pclust.csv")),
+      row.names = FALSE
+    )
+    write.csv(
+      lc[["N"]],
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_N.csv")),
       row.names = FALSE
     )
     
     lcmodel <- reshape2::melt(lc$probs, level=2)
     lcmodel$L2 <- stringr::str_to_title(lcmodel$L2)
-    for(i in 1:length(names_symptoms)) {
-      lcmodel$L2[lcmodel$L2 == paste0("Lc_",i)] <- names_symptoms[i]
-      
-    }
     
     # Get nice plot of class membership
     zp1 <- ggplot(lcmodel,aes(x = L2, y = value, fill = Var2))
     zp1 <- zp1 + geom_bar(stat = "identity", position = "stack")
     zp1 <- zp1 + facet_grid(Var1 ~ .) 
     zp1 <- zp1 + scale_fill_brewer(type="seq", palette="Blues",labels = c("No symptom", "Symptom")) +theme_bw()
-    zp1 <- zp1 + labs(x = "Symptoms",y=paste0("Prevalence syptoms in ", db.name), fill ="Response categories")	#x = "Questionnaire items"
+    zp1 <- zp1 + labs(x = "Symptoms",y=paste0("Prevalence symptoms in ", db.name), fill ="Response categories")	
     zp1 <- zp1 + theme( axis.text.y=element_blank(),
                         axis.ticks.y=element_blank(),                    
                         panel.grid.major.y=element_blank(),
@@ -130,8 +135,10 @@ run_clustering <- function(numclust, numsymp, counter) {
     write.csv(
       factors,
       file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_average.csv")),
-      row.names = FALSE
+      row.names = TRUE
     )
+    
+    factors <- factors[factors != 0]
     
     # Include prevalence average lines
     for (i in 1:length(factors)) {
@@ -158,7 +165,7 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     write.csv(
       clusters_age,
-      file = here::here(output_clustering, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_age.csv")),
+      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_age.csv")),
       row.names = FALSE
     )
     

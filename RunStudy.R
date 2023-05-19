@@ -59,9 +59,9 @@ if(getStudyCohorts) {
 
 # Objective 3a: Clustering
 if(doClustering) {
-  info(logger, 'PERFORMING LCA CLUSTERING AND NETWORK ANALYSIS')
+  info(logger, 'PERFORMING LCA CLUSTERING')
   source(here("3_Clustering","WP3_code.R"), local = TRUE)
-  info(logger, 'FINISHED LCA CLUSTERING AND NETWORK ANALYSIS')
+  info(logger, 'FINISHED LCA CLUSTERING')
 }
 
 zip::zip(zipfile = file.path(output.folder, paste0(zipName, ".zip")),

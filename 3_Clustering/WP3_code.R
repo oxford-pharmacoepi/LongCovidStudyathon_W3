@@ -178,7 +178,10 @@ run_clustering <- function(numclust, numsymp, counter) {
     # Look at number of people with symptom per cluster
     number_people <- working_data %>% dplyr::select(-c(age,sex,subject_id,sumrow)) 
     for(i in 1:numclust) {
-      clust <- apply(number_people %>% dplyr::filter(cluster_assignment == i) %>% dplyr::select(-cluster_assignment), 2, sum)
+      clust <- apply(number_people %>% dplyr::filter(cluster_assignment == i) %>% 
+                       dplyr::select(-cluster_assignment), 2, sum)
+      clust[clust < 5] <- NA
+
       write.csv(
         clust,
         file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_clust_",i,".csv")),
@@ -196,6 +199,13 @@ run_clustering <- function(numclust, numsymp, counter) {
       dplyr::summarise(across(everything(), list(median = median, var = var, sum = sum), na.rm = TRUE)) %>%
       dplyr::arrange(cluster_assignment) %>%
       computeQuery()
+    
+    HU_sum1 <- HU_summary %>% 
+      dplyr::select(!dplyr::ends_with("sum"))
+    HU_sum2 <- HU_summary %>% 
+      dplyr::select(dplyr::ends_with("sum"))
+    HU_sum2[HU_sum2 < 5] <- NA
+    HU_summary <- HU_sum1 %>% dplyr::cross_join(HU_sum2)
     
     write.csv(
       HU_summary,
@@ -216,6 +226,13 @@ run_clustering <- function(numclust, numsymp, counter) {
       dplyr::arrange(cluster_assignment) %>%
       computeQuery()
     
+    com_sum1 <- com_summary %>% 
+      dplyr::select(!dplyr::ends_with("sum"))
+    com_sum2 <- com_summary %>% 
+      dplyr::select(dplyr::ends_with("sum"))
+    com_sum2[com_sum2 < 5] <- NA
+    com_summary <- com_sum1 %>% dplyr::cross_join(com_sum2)
+    
     write.csv(
       com_summary,
       file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_comorbidities.csv")),
@@ -226,6 +243,9 @@ run_clustering <- function(numclust, numsymp, counter) {
     vacc_char <- working_data %>% 
       dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
       dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
+      dplyr::mutate(n = as.numeric(n)) %>% 
+      dplyr::mutate(n = if_else(is.na(n), 0, n)) %>%
+      dplyr::mutate(n = ifelse(n <= 5, NA, n)) %>% 
       computeQuery()
     
     vacc_counts <- vacc_char %>% 

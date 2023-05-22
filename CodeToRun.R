@@ -23,13 +23,12 @@ library(tibble)
 library(reshape2)
 library(readr)
 library(PatientProfiles)
+library(poLCA)
 
 # install the following packages like this, with remotes 
 # library(remotes)
 # remotes::install_github("OHDSI/CirceR")
 library(CirceR)
-# remotes::install_github("oxford-pharmacoepi/poLCA_oxf")
-library(poLCA)
 
 # Database name or acronym (e.g. for CPRD AURUM use "CPRDAurum")
 db.name <- "..."

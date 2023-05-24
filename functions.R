@@ -423,29 +423,44 @@ poLCA_oxf <-
     return(ret)
   }
 
-### automatically orders the classes by prevalence
-poLCAord <-
-  function (formula, data, nclass = 2, maxiter = 1000, graphs = FALSE,
-            tol = 0.0000000001, na.rm = TRUE, probs.start = NULL, nrep = 1,
-            verbose = TRUE, calc.se = TRUE,ordVar=NULL){
-    
-    mm <- match.call()
-    mm <- as.list(mm)
-    mm[[1]] <- NULL
-    mm$ordVar <- NULL
-    mod <- do.call("poLCA",mm)
-    
-    pp <- if(!is.null(ordVar)) mod$probs[[ordVar]][,1] else mod$P
-    if(length(pp)>length(unique(pp))){
-      warning(paste0("Ties in ", ordVar," ordering by prevalence"))
-      pp <- mod$P
+insertTable <- function(x,
+                        cdm, 
+                        name,
+                        overwrite = TRUE) {
+  con <- attr(cdm, "dbcon")
+  writeSchema <- attr(cdm, "write_schema")
+  checkTableExist <- name %in% CDMConnector::listTables(con, writeSchema)
+  if (checkTableExist) {
+    if (overwrite) {
+      DBI::dbRemoveTable(con, CDMConnector:::inSchema(writeSchema, name))
+    } else {
+      stop(paste0("'", name, "' table already exists."))
     }
-    ord <- order(pp,decreasing=TRUE)
-    
-    probs.start.new <- poLCA::poLCA.reorder(mod$probs.start,ord)
-    
-    mm$probs.start <- probs.start.new
-    mm$nrep <- 1
-    
-    do.call("poLCA",mm)
   }
+  DBI::dbCreateTable(con, CDMConnector:::inSchema(writeSchema, name), x)
+  DBI::dbAppendTable(con, CDMConnector:::inSchema(writeSchema, name), x)
+  if (methods::is(con, "duckdb_connection")) {
+    ref <- dplyr::tbl(con, paste(c(writeSchema, name), collapse = "."))
+  } else if (length(writeSchema) == 2) {
+    ref <- dplyr::tbl(con,
+                      dbplyr::in_catalog(writeSchema[[1]], writeSchema[[2]], name))
+  } else if (length(writeSchema) == 1) {
+    ref <- dplyr::tbl(con, dbplyr::in_schema(writeSchema, name))
+  } else {
+    ref <- dplyr::tbl(con, name)
+  }
+  return(ref)
+}
+
+
+getCohortCount <- function(cohort) {
+  cohort %>%
+    group_by(cohort_definition_id) %>%
+    summarise(
+      number_records = dplyr::n(),
+      number_subjects = dplyr::n_distinct(.data$subject_id),
+      .groups = "drop"
+    ) %>%
+    collect() %>%
+    arrange(cohort_definition_id)
+}

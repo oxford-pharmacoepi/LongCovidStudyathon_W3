@@ -51,15 +51,6 @@ attrition_censor <- covid[[4]]
 attrition_censor <- attrition_censor %>% dplyr::mutate(cohort_definition_id = 1) %>%
   computeQuery()
 
-computeQuery(new_infection,
-             name = BaseCohortsName,
-             temporary = FALSE,
-             schema = results_database_schema,
-             overwrite = TRUE)
-
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName))
-
 write_csv(
   attrition,
   file = here::here(output_at, "attrition_base.csv")
@@ -72,6 +63,22 @@ write_csv(
 names_final_cohorts <- dplyr::tibble(table_name = BaseCohortsName,
                                      cohort_definition_id = c(1),
                                      cohort_name = c("Infection"))
+
+# Save attributes of the cohort
+attr(new_infection, "cohort_set") <- names_final_cohorts %>% 
+  dplyr::filter(table_name == BaseCohortsName) %>%
+  dplyr::select(cohort_definition_id, cohort_name) 
+
+attr(new_infection, "cohort_count") <- getCohortCount(new_infection)
+
+cdm[[BaseCohortsName]] <- newGeneratedCohortSet(
+  cohortRef = computeQuery(new_infection, BaseCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+  cohortSetRef = insertTable(attr(new_infection, "cohort_set"), cdm, paste0(BaseCohortsName, "_set")),
+  cohortCountRef = insertTable(attr(new_infection, "cohort_count"), cdm, paste0(BaseCohortsName, "_count"))
+)
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName))
 
 # ---------------------------------------------------------------------
 # OUTCOME COHORTS
@@ -95,11 +102,18 @@ names_final_cohorts <- rbind(names_final_cohorts,
 
 longcovid <- dplyr::union_all(lcsymp,lccode) %>% computeQuery()
 
-computeQuery(longcovid,
-             name = LongCovidCohortsName,
-             temporary = FALSE,
-             schema = results_database_schema,
-             overwrite = TRUE)
+# Save attributes of the cohort
+attr(longcovid, "cohort_set") <- names_final_cohorts %>% 
+  dplyr::filter(table_name == LongCovidCohortsName) %>%
+  dplyr::select(cohort_definition_id, cohort_name) 
+
+attr(longcovid, "cohort_count") <- getCohortCount(longcovid)
+
+cdm[[LongCovidCohortsName]] <- newGeneratedCohortSet(
+  cohortRef = computeQuery(longcovid, LongCovidCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+  cohortSetRef = insertTable(attr(longcovid, "cohort_set"), cdm, paste0(LongCovidCohortsName, "_set")),
+  cohortCountRef = insertTable(attr(longcovid, "cohort_count"), cdm, paste0(LongCovidCohortsName, "_count"))
+)
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
                   cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
@@ -180,12 +194,23 @@ if(vaccine_data && db.name != "CPRDGold") {
     vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
     vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)
     
-    computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
                                                cohort_definition_id = c(1:5), 
                                                cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
+    
+    # Save attributes of the cohort
+    attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
+      dplyr::filter(table_name == VaccCohortsName) %>%
+      dplyr::select(cohort_definition_id, cohort_name) 
+    
+    attr(vacc_all, "cohort_count") <- getCohortCount(vacc_all)
+    
+    cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
+      cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+      cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
+      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+    )
     
   } else {
     vaccinated <- cdm[[InitialCohortsName]] %>%
@@ -253,12 +278,23 @@ if(vaccine_data && db.name != "CPRDGold") {
     vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
     vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)    
     
-    computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-    
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
                                                cohort_definition_id = c(1:5), 
                                                cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
+    
+    # Save attributes of the cohort
+    attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
+      dplyr::filter(table_name == VaccCohortsName) %>%
+      dplyr::select(cohort_definition_id, cohort_name) 
+    
+    attr(vacc_all, "cohort_count") <- getCohortCount(vacc_all)
+    
+    cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
+      cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+      cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
+      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+    )
     
   }
 } else if(vaccine_data && db.name == "CPRDGold") {
@@ -338,19 +374,36 @@ if(vaccine_data && db.name != "CPRDGold") {
   vacc_all <- dplyr::union_all(vacc_all, vaccinated_second)
   vacc_all <- dplyr::union_all(vacc_all, vaccinated_third)
   
-  computeQuery(vacc_all, name = VaccCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-  
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = VaccCohortsName,
                                              cohort_definition_id = c(1:5), 
                                              cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
   
+  # Save attributes of the cohort
+  attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
+    dplyr::filter(table_name == VaccCohortsName) %>%
+    dplyr::select(cohort_definition_id, cohort_name) 
+  
+  attr(vacc_all, "cohort_count") <- getCohortCount(vacc_all)
+  
+  cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
+    cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+    cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
+    cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+  )
+  
 }
-
 
 # ---------------------------------------------------------------------
 # OVERLAPPING COHORTS
 # Overlapping cohorts of single symptoms with base cohorts
+
+cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                  cohortTables = c(InitialCohortsName,BaseCohortsName,
+                                   LongCovidCohortsName,VaccCohortsName))
+
+message("Getting overlap cohorts")
+info(logger, '-- Getting overlap cohorts')
 
 if(cdm[[LongCovidCohortsName]] %>% 
    dplyr::filter(cohort_definition_id == 1) %>% tally() %>% pull() > 5) {
@@ -383,12 +436,24 @@ if(cdm[[LongCovidCohortsName]] %>%
   overlapip_w <- do_overlap(cdm, 1, 26, 26, tableName = LongCovidCohortsName)
   overlapip <- dplyr::union_all(overlapip, overlapip_w)
 }
+
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = OverlapCohortsName,
                                            cohort_definition_id = 26, 
                                            cohort_name =paste0("Inf_",Initial_cohorts$cohort_name[32])))
 
-computeQuery(overlapip, name = OverlapCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+# Save attributes of the cohort
+attr(overlapip, "cohort_set") <- names_final_cohorts %>% 
+  dplyr::filter(table_name == OverlapCohortsName) %>%
+  dplyr::select(cohort_definition_id, cohort_name) 
+
+attr(overlapip, "cohort_count") <- getCohortCount(overlapip)
+
+cdm[[OverlapCohortsName]] <- newGeneratedCohortSet(
+  cohortRef = computeQuery(overlapip, OverlapCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+  cohortSetRef = insertTable(attr(overlapip, "cohort_set"), cdm, paste0(OverlapCohortsName, "_set")),
+  cohortCountRef = insertTable(attr(overlapip, "cohort_count"), cdm, paste0(OverlapCohortsName, "_count"))
+)
 
 if(vaccine_data) {
   cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
@@ -406,12 +471,23 @@ if(vaccine_data) {
 hucohorts <- cdm[[InitialCohortsName]] %>%
   dplyr::filter(cohort_definition_id %in% c(33:36))
   
-computeQuery(hucohorts, name = HUCohortsName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
-
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = HUCohortsName,
                                              cohort_definition_id = c(1:4),
                                              cohort_name = Initial_cohorts$cohort_name[33:36]))
+  
+  # Save attributes of the cohort
+  attr(hucohorts, "cohort_set") <- names_final_cohorts %>% 
+    dplyr::filter(table_name == HUCohortsName) %>%
+    dplyr::select(cohort_definition_id, cohort_name) 
+  
+  attr(hucohorts, "cohort_count") <- getCohortCount(hucohorts)
+  
+  cdm[[HUCohortsName]] <- newGeneratedCohortSet(
+    cohortRef = computeQuery(hucohorts, HUCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
+    cohortSetRef = insertTable(attr(hucohorts, "cohort_set"), cdm, paste0(HUCohortsName, "_set")),
+    cohortCountRef = insertTable(attr(hucohorts, "cohort_count"), cdm, paste0(HUCohortsName, "_count"))
+  )
   
 
 # --------------------------------------------------------------------

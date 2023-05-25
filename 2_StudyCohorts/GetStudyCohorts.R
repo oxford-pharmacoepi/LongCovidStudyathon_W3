@@ -62,7 +62,7 @@ write_csv(
 
 names_final_cohorts <- dplyr::tibble(table_name = BaseCohortsName,
                                      cohort_definition_id = c(1),
-                                     cohort_name = c("Infection"))
+                                     cohort_name = c("infection"))
 
 # Save attributes of the cohort
 attr(new_infection, "cohort_set") <- names_final_cohorts %>% 
@@ -98,7 +98,7 @@ lccode <- create_outcome(cdm, window = 32, new_ids = 26, tableName = LongCovidCo
 
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = LongCovidCohortsName,
-                                           cohort_definition_id = 26, cohort_name = "LC code"))
+                                           cohort_definition_id = 26, cohort_name = "lc_code"))
 
 longcovid <- dplyr::union_all(lcsymp,lccode) %>% computeQuery()
 
@@ -197,7 +197,7 @@ if(vaccine_data && db.name != "CPRDGold") {
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
                                                cohort_definition_id = c(1:5), 
-                                               cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
+                                               cohort_name = c("vaccinated", "not_vaccinated", "first_dose", "second_dose", "third_dose")))
     
     # Save attributes of the cohort
     attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
@@ -281,7 +281,7 @@ if(vaccine_data && db.name != "CPRDGold") {
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = VaccCohortsName,
                                                cohort_definition_id = c(1:5), 
-                                               cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
+                                               cohort_name = c("vaccinated", "not_vaccinated", "first_dose", "second_dose", "third_dose")))
     
     # Save attributes of the cohort
     attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
@@ -377,7 +377,7 @@ if(vaccine_data && db.name != "CPRDGold") {
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = VaccCohortsName,
                                              cohort_definition_id = c(1:5), 
-                                             cohort_name = c("Vaccinated", "Not_vaccinated", "First_dose", "Second_dose", "Third_dose")))
+                                             cohort_name = c("vaccinated", "not_vaccinated", "first_dose", "second_dose", "third_dose")))
   
   # Save attributes of the cohort
   attr(vacc_all, "cohort_set") <- names_final_cohorts %>% 
@@ -412,7 +412,7 @@ if(cdm[[LongCovidCohortsName]] %>%
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = OverlapCohortsName,
                                            cohort_definition_id = 1, 
-                                           cohort_name =paste0("Inf_",Initial_cohorts$cohort_name[2])))
+                                           cohort_name =paste0("inf_",Initial_cohorts$cohort_name[2])))
 
 base_ids <- c(1)
 outcome_ids <- c(2:25)
@@ -422,7 +422,7 @@ for(i in base_ids) {
     names_final_cohorts <- rbind(names_final_cohorts,
                                  dplyr::tibble(table_name = OverlapCohortsName,
                                                cohort_definition_id = j, 
-                                               cohort_name = paste0("Inf_",Initial_cohorts$cohort_name[j+1])))
+                                               cohort_name = paste0("inf_",Initial_cohorts$cohort_name[j+1])))
     if(cdm[[LongCovidCohortsName]] %>% 
       dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
       overlapip_w <- do_overlap(cdm, i, j, j, tableName = LongCovidCohortsName)
@@ -440,7 +440,7 @@ if(cdm[[LongCovidCohortsName]] %>%
 names_final_cohorts <- rbind(names_final_cohorts,
                              dplyr::tibble(table_name = OverlapCohortsName,
                                            cohort_definition_id = 26, 
-                                           cohort_name =paste0("Inf_",Initial_cohorts$cohort_name[32])))
+                                           cohort_name =paste0("inf_",Initial_cohorts$cohort_name[32])))
 
 # Save attributes of the cohort
 attr(overlapip, "cohort_set") <- names_final_cohorts %>% 

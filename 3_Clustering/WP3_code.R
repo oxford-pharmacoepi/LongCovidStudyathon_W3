@@ -240,22 +240,25 @@ run_clustering <- function(numclust, numsymp, counter) {
     )
     
     # Vaccination status
-    vacc_char <- working_data %>% 
-      dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
-      dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
-      dplyr::mutate(n = as.numeric(n)) %>% 
-      dplyr::mutate(n = if_else(is.na(n), 0, n)) %>%
-      dplyr::mutate(n = ifelse(n <= 5, NA, n)) %>% 
-      computeQuery()
-    
-    vacc_counts <- vacc_char %>% 
-      dplyr::group_by(cluster_assignment, dose) %>% tally() %>%
-      computeQuery()
-    
-    write.csv(
-      vacc_counts,
-      file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_vaccination.csv"))
-    )
+    if(vaccine_data) {
+      vacc_char <- working_data %>% 
+        dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
+        dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
+        dplyr::mutate(n = as.numeric(n)) %>% 
+        dplyr::mutate(n = if_else(is.na(n), 0, n)) %>%
+        dplyr::mutate(n = ifelse(n <= 5, NA, n)) %>% 
+        computeQuery()
+      
+      vacc_counts <- vacc_char %>% 
+        dplyr::group_by(cluster_assignment, dose) %>% tally() %>%
+        computeQuery()
+      
+      write.csv(
+        vacc_counts,
+        file = here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_vaccination.csv"))
+      )
+    }
+
   }
   return(results)
 }

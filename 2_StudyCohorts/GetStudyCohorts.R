@@ -398,9 +398,14 @@ if(vaccine_data && db.name != "CPRDGold") {
 # OVERLAPPING COHORTS
 # Overlapping cohorts of single symptoms with base cohorts
 
-cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
-                  cohortTables = c(InitialCohortsName,BaseCohortsName,
-                                   LongCovidCohortsName,VaccCohortsName))
+if(vaccine_data) {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName,
+                                     VaccCohortsName))
+} else {
+  cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
+                    cohortTables = c(InitialCohortsName,BaseCohortsName,LongCovidCohortsName))
+}
 
 message("Getting overlap cohorts")
 info(logger, '-- Getting overlap cohorts')

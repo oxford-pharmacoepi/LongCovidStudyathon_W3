@@ -431,7 +431,8 @@ for(i in base_ids) {
     if(cdm[[LongCovidCohortsName]] %>% 
       dplyr::filter(cohort_definition_id == j) %>% tally() %>% pull() > 5) {
       overlapip_w <- do_overlap(cdm, i, j, j, tableName = LongCovidCohortsName)
-      overlapip <- dplyr::union_all(overlapip, overlapip_w)
+      overlapip <- dplyr::union_all(overlapip, overlapip_w) %>%
+        computeQuery()
     }
   }
 }
@@ -439,7 +440,8 @@ for(i in base_ids) {
 if(cdm[[LongCovidCohortsName]] %>% 
    dplyr::filter(cohort_definition_id == 26) %>% tally() %>% pull() > 5) {
   overlapip_w <- do_overlap(cdm, 1, 26, 26, tableName = LongCovidCohortsName)
-  overlapip <- dplyr::union_all(overlapip, overlapip_w)
+  overlapip <- dplyr::union_all(overlapip, overlapip_w) %>%
+    computeQuery()
 }
 
 names_final_cohorts <- rbind(names_final_cohorts,

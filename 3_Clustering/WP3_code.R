@@ -205,7 +205,10 @@ run_clustering <- function(numclust, numsymp, counter) {
     HU_sum2 <- HU_summary %>% 
       dplyr::select(dplyr::ends_with("sum"))
     HU_sum2[HU_sum2 < 5] <- NA
-    HU_summary <- HU_sum1 %>% dplyr::cross_join(HU_sum2)
+    HU_summary <- dplyr::tibble(
+      HU_sum1,
+      HU_sum2
+    )
     
     write.csv(
       HU_summary,

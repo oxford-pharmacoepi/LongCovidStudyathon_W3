@@ -231,7 +231,10 @@ run_clustering <- function(numclust, numsymp, counter) {
     com_sum2 <- com_summary %>% 
       dplyr::select(dplyr::ends_with("sum"))
     com_sum2[com_sum2 < 5] <- NA
-    com_summary <- com_sum1 %>% dplyr::cross_join(com_sum2)
+    com_summary <- dplyr::tibble(
+      com_sum1,
+      com_sum2
+    )
     
     write.csv(
       com_summary,

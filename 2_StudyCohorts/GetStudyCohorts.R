@@ -550,7 +550,8 @@ write_csv(names_final_cohorts,
 
 # First get all people with LC symptoms (overlap with infection cohort at base)
 symptoms_LC <- cdm[[OverlapCohortsName]] %>% 
-  dplyr::filter(.data$cohort_definition_id %in% c(1:26))
+  dplyr::filter(.data$cohort_definition_id %in% c(1:26)) %>%
+  computeQuery()
 
 names_symptoms <- names_final_cohorts %>% 
   dplyr::filter(.data$table_name == LongCovidCohortsName) %>%
@@ -574,7 +575,8 @@ working_name <- names_symptoms[i]
 working_name <- enquo(working_name)
 data_LCA <- symptoms_LC %>% dplyr::filter(cohort_name == !!working_name) %>% 
   dplyr::mutate(!!working_name := as.integer(1)) %>% 
-  dplyr::select(subject_id,!!working_name)
+  dplyr::select(subject_id,!!working_name) %>%
+  computeQuery()
 
 for(i in 2:length(names_symptoms)) {
   working_name <- names_symptoms[i]
@@ -583,7 +585,8 @@ for(i in 2:length(names_symptoms)) {
                                        dplyr::filter(cohort_name == !!working_name) %>% 
                                        dplyr::mutate(!!working_name := as.integer(1)) %>% 
                                        dplyr::select(subject_id,!!working_name), 
-                                     by = c("subject_id"))
+                                     by = c("subject_id")) %>%
+    computeQuery()
   
 }
 data_LCA <- data_LCA %>% 
@@ -593,7 +596,8 @@ for(n in names_symptoms) {
   if(!(n %in% colnames(data_LCA))) {
     n <- enquo(n)
     data_LCA <- data_LCA %>% 
-      dplyr::mutate(!!n := c(0))
+      dplyr::mutate(!!n := c(0)) %>%
+      computeQuery()
   }
 }
 data_LCA <- data_LCA %>% distinct()
@@ -603,7 +607,8 @@ data_LCA <- data_LCA %>% dplyr::left_join(symptoms_LC %>%
   dplyr::group_by(subject_id) %>%
   dplyr::filter(cohort_end_date == min(cohort_end_date)) %>%
   dplyr::filter(cohort_definition_id == min(cohort_definition_id)) %>%
-  distinct()
+  distinct() %>%
+  computeQuery()
 
 # Characterisation of the cluster people
 cdm[["visit_occurrence"]] <- cdm[["visit_occurrence"]] %>%
@@ -655,6 +660,10 @@ for(i in c(1:9)) {
     dplyr::select(descendant_concept_id) %>% 
     dplyr::distinct() %>% 
     pull()
+  
+  if(length(ip.codes.w.desc) > 100) {
+    ip.codes.w.desc <- ip.codes.w.desc[1:100]
+  }
   
   name_col <- cohort_set$cohort_name[i]
   name_col <- rlang::enquo(name_col)

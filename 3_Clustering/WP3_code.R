@@ -280,6 +280,13 @@ for(nc in c(2:7)) { # 2 to 7 clusters
 results <- bind_rows(results)
 results2 <- tidyr::gather(results,Criteria,Value,5:9)
 
+# Save table with all IC information
+write.csv(
+  results,
+  file = here::here(output_clustering, paste0("Information_criteria.csv")),
+  row.names = FALSE
+)
+
 # Plots with information criteria results for all models tried (one per # symptoms)
 for(i in c(1:3)) {
   result_working <- results2 %>% dplyr::filter(Symp == i)
@@ -302,10 +309,3 @@ for(i in c(1:3)) {
   ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
   
 }
-
-# Save table with all IC information
-write.csv(
-  results,
-  file = here::here(output_clustering, paste0("Information_criteria.csv")),
-  row.names = FALSE
-)

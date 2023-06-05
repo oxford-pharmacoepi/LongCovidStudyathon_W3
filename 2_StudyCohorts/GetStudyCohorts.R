@@ -661,10 +661,12 @@ for(i in c(1:9)) {
     dplyr::distinct() %>% 
     pull()
   
-  if(length(ip.codes.w.desc) > 100) {
-    ip.codes.w.desc <- ip.codes.w.desc[1:100]
+  if(desc_sql) {
+    if(length(ip.codes.w.desc) > 100) {
+      ip.codes.w.desc <- ip.codes.w.desc[1:100]
+    }
   }
-  
+
   name_col <- cohort_set$cohort_name[i]
   name_col <- rlang::enquo(name_col)
   

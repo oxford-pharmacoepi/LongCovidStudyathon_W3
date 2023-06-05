@@ -190,9 +190,12 @@ run_clustering <- function(numclust, numsymp, counter) {
         row.names = TRUE
       )
     }
+    
+    cluster_data <- cdm[[clusterCohortName]] %>%
+      dplyr::collect()
 
     working_data <- working_data %>%
-      dplyr::left_join(cdm[[clusterCohortName]], by =c("subject_id"), copy = TRUE) %>%
+      dplyr::left_join(cluster_data, by =c("subject_id")) %>%
       computeQuery()
     
     # Healthcare utilisation outcomes  
@@ -203,15 +206,9 @@ run_clustering <- function(numclust, numsymp, counter) {
       dplyr::arrange(cluster_assignment) %>%
       computeQuery()
     
-    HU_sum1 <- HU_summary %>% 
-      dplyr::select(!dplyr::ends_with("sum"))
-    HU_sum2 <- HU_summary %>% 
-      dplyr::select(dplyr::ends_with("sum"))
-    HU_sum2[HU_sum2 < 5] <- NA
-    HU_summary <- dplyr::tibble(
-      HU_sum1,
-      HU_sum2
-    )
+    HU_summary <- HU_summary %>% 
+      dplyr::mutate(dplyr::across(dplyr::ends_with("sum"), ~ dplyr::if_else(.x < 5, NA, .x))) %>%
+      computeQuery()
     
     write.csv(
       HU_summary,
@@ -232,15 +229,9 @@ run_clustering <- function(numclust, numsymp, counter) {
       dplyr::arrange(cluster_assignment) %>%
       computeQuery()
     
-    com_sum1 <- com_summary %>% 
-      dplyr::select(!dplyr::ends_with("sum"))
-    com_sum2 <- com_summary %>% 
-      dplyr::select(dplyr::ends_with("sum"))
-    com_sum2[com_sum2 < 5] <- NA
-    com_summary <- dplyr::tibble(
-      com_sum1,
-      com_sum2
-    )
+    com_summary <- com_summary %>% 
+      dplyr::mutate(dplyr::across(dplyr::ends_with("sum"), ~ dplyr::if_else(.x < 5, NA, .x))) %>%
+      computeQuery()
     
     write.csv(
       com_summary,

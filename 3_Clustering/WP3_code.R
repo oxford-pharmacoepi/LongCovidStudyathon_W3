@@ -148,7 +148,9 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     # Characterise clusters
     # Look at characterisation of clusters: age and sex
-    working_data <- working_data %>% mutate(cluster_assignment = lc$predclass)
+    working_data <- working_data %>% 
+      mutate(cluster_assignment = lc$predclass) %>%
+      computeQuery()
     clusters_age <- working_data %>%
       dplyr::group_by(cluster_assignment) %>%
       dplyr::summarise(median_age = median(age),
@@ -190,7 +192,8 @@ run_clustering <- function(numclust, numsymp, counter) {
     }
 
     working_data <- working_data %>%
-      dplyr::left_join(cdm[[clusterCohortName]], by =c("subject_id"), copy = TRUE)
+      dplyr::left_join(cdm[[clusterCohortName]], by =c("subject_id"), copy = TRUE) %>%
+      computeQuery()
     
     # Healthcare utilisation outcomes  
     HU_summary <- working_data %>%

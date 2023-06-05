@@ -51,6 +51,9 @@ entropy <- function(p) sum(-p*log(p))
 mydata$sumrow <- rowSums(mydata %>% dplyr::select(dplyr::all_of(names_symptoms)), na.rm = TRUE) - 26
 results <- list()
 
+cluster_data <- cdm[[clusterCohortName]] %>%
+  dplyr::collect()
+
 # Run a sequence of models with 2-7 classes and print out the model with the lowest BIC
 run_clustering <- function(numclust, numsymp, counter) {
   
@@ -190,9 +193,6 @@ run_clustering <- function(numclust, numsymp, counter) {
         row.names = TRUE
       )
     }
-    
-    cluster_data <- cdm[[clusterCohortName]] %>%
-      dplyr::collect()
 
     working_data <- working_data %>%
       dplyr::left_join(cluster_data, by =c("subject_id")) %>%

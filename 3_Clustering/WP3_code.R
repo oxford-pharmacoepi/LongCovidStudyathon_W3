@@ -52,6 +52,7 @@ mydata$sumrow <- rowSums(mydata %>% dplyr::select(dplyr::all_of(names_symptoms))
 results <- list()
 
 cluster_data <- cdm[[clusterCohortName]] %>%
+  dplyr::relocate(c("cohort_start_date", "cohort_end_date","sex"), .after = last_col()) %>%
   dplyr::collect()
 
 # Run a sequence of models with 2-7 classes and print out the model with the lowest BIC

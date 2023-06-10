@@ -245,13 +245,11 @@ run_clustering <- function(numclust, numsymp, counter) {
       vacc_char <- working_data %>% 
         dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
         dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
+        dplyr::group_by(cluster_assignment, dose) %>% 
+        dplyr::tally() %>%
         dplyr::mutate(n = as.numeric(n)) %>% 
         dplyr::mutate(n = if_else(is.na(n), 0, n)) %>%
         dplyr::mutate(n = ifelse(n <= 5, NA, n)) %>% 
-        computeQuery()
-      
-      vacc_counts <- vacc_char %>% 
-        dplyr::group_by(cluster_assignment, dose) %>% tally() %>%
         computeQuery()
       
       write.csv(

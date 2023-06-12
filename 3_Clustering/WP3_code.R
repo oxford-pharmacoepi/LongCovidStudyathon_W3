@@ -242,7 +242,7 @@ run_clustering <- function(numclust, numsymp, counter) {
     
     # Vaccination status
     if(vaccine_data) {
-      vacc_char <- working_data %>% 
+      vacc_counts <- working_data %>% 
         dplyr::mutate(dose = first_dose + second_dose + third_dose) %>%
         dplyr::select(subject_id,cohort_start_date,cohort_end_date,dose, cluster_assignment) %>% 
         dplyr::group_by(cluster_assignment, dose) %>% 

@@ -64,7 +64,7 @@ if(doClustering) {
   info(logger, 'FINISHED LCA CLUSTERING')
 }
 
-zip::zip(zipfile = file.path(output.folder, paste0(zipName, ".zip")),
+zip::zip(zipfile = paste0(zipName, ".zip"),
          files = list.files(tempDir, full.names = TRUE))
 if (tempDirCreated) {
   unlink(tempDir, recursive = TRUE)

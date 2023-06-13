@@ -148,7 +148,13 @@ run_clustering <- function(numclust, numsymp, counter) {
     for (i in 1:length(factors)) {
       zp1 <- zp1 + geom_segment(x = (i - 0.5), y = factors[[i]], xend = (i + 0.5), yend = factors[[i]])
     }
-    ggsave(here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_figure.jpg")))
+    if(graphics_save) {
+      jpeg(here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_figure.jpg")))
+      zp1
+      dev.off()
+    } else {
+      ggsave(here::here(output_clustering_w, paste0("Clustering_LCA_clust_",numclust,"_symp_",numsymp,"_figure.jpg")))
+    }
     
     # Characterise clusters
     # Look at characterisation of clusters: age and sex
@@ -300,7 +306,13 @@ for(i in c(1:3)) {
             legend.text=  element_text(size=16),
             axis.line = element_line(colour = "black")) 
     
-    ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
+    if(graphics_save) {
+      jpeg(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
+      zp1
+      dev.off()
+    } else {
+      ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
+    }
   }
   
 }

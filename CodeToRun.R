@@ -89,6 +89,9 @@ instantiate_diff <- FALSE
 # To not allow big sql queries if you have had problems
 desc_sql <- FALSE
 
+# If you have problems with graphical interface
+graphic_save <- FALSE
+
 # Run the study
 source(here("RunStudy.R"))
 

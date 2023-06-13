@@ -90,7 +90,7 @@ instantiate_diff <- FALSE
 desc_sql <- FALSE
 
 # If you have problems with graphical interface
-graphic_save <- FALSE
+graphics_save <- FALSE
 
 # Run the study
 source(here("RunStudy.R"))

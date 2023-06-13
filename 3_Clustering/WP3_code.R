@@ -284,21 +284,23 @@ write.csv(
 for(i in c(1:3)) {
   result_working <- results2 %>% dplyr::filter(Symp == i)
   
-  fit.plot<-ggplot(result_working) + 
-    geom_point(aes(x=Clust,y=Value),size=3) +
-    geom_line(aes(Clust, Value, group = 1)) +
-    theme_bw()+
-    labs(x = "", y="", title = "") + 
-    facet_grid(Criteria ~. ,scales = "free") +
-    theme_bw(base_size = 16, base_family = "") +   
-    theme(panel.grid.major.x = element_blank() ,
-          panel.grid.major.y = element_line(colour="grey", size=0.5),
-          legend.title = element_text(size = 16, face = 'bold'),
-          axis.text = element_text(size = 16),
-          axis.title = element_text(size = 16),
-          legend.text=  element_text(size=16),
-          axis.line = element_line(colour = "black")) 
-  
-  ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
+  if(result_working %>% dplyr::tally() %>% dplyr::pull() != 0) {
+    fit.plot<-ggplot(result_working) + 
+      geom_point(aes(x=Clust,y=Value),size=3) +
+      geom_line(aes(Clust, Value, group = 1)) +
+      theme_bw()+
+      labs(x = "", y="", title = "") + 
+      facet_grid(Criteria ~. ,scales = "free") +
+      theme_bw(base_size = 16, base_family = "") +   
+      theme(panel.grid.major.x = element_blank() ,
+            panel.grid.major.y = element_line(colour="grey", size=0.5),
+            legend.title = element_text(size = 16, face = 'bold'),
+            axis.text = element_text(size = 16),
+            axis.title = element_text(size = 16),
+            legend.text=  element_text(size=16),
+            axis.line = element_line(colour = "black")) 
+    
+    ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
+  }
   
 }

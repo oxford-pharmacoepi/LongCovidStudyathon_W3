@@ -291,7 +291,7 @@ for(i in c(1:3)) {
   result_working <- results2 %>% dplyr::filter(Symp == i)
   
   if(result_working %>% dplyr::tally() %>% dplyr::pull() != 0) {
-    fit.plot<-ggplot(result_working) + 
+    fit.plot <- ggplot(result_working) + 
       geom_point(aes(x=Clust,y=Value),size=3) +
       geom_line(aes(Clust, Value, group = 1)) +
       theme_bw()+
@@ -308,7 +308,7 @@ for(i in c(1:3)) {
     
     if(graphics_save) {
       jpeg(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))
-      zp1
+      fit.plot
       dev.off()
     } else {
       ggsave(here::here(output_clustering, paste0("Clustering_LCA_symp_",i,"_IC.jpg")))

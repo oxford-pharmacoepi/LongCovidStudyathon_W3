@@ -31,14 +31,14 @@ do_exclusion <- function(cdm, cohort, id, S_start_date) {
                                    reason = "In observation at cohort entry"))
   
     # Prior history 365 days
-    cohort <- cohort %>% addPriorHistory(cdm) %>% computeQuery() 
-    cohort <- cohort %>% filter(.data$prior_history >= 365) %>% computeQuery()
+    cohort <- cohort %>% addPriorObservation(cdm) %>% computeQuery() 
+    cohort <- cohort %>% filter(.data$prior_observation >= 365) %>% computeQuery()
     attrition <- rbind(attrition, 
                        dplyr::tibble(number_observations = cohort %>%
                                        dplyr::tally()
                                      %>% dplyr::pull(), reason = paste0("365 days of prior history")))
     
-    cohort <- cohort %>% dplyr::select(-c(prior_history)) %>% computeQuery()
+    cohort <- cohort %>% dplyr::select(-c(prior_observation)) %>% computeQuery()
   
   
     # Historical influenza 90 days

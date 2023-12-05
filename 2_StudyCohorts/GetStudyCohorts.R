@@ -74,7 +74,8 @@ attr(new_infection, "cohort_count") <- getCohortCount(new_infection)
 cdm[[BaseCohortsName]] <- newGeneratedCohortSet(
   cohortRef = computeQuery(new_infection, BaseCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
   cohortSetRef = insertTable(attr(new_infection, "cohort_set"), cdm, paste0(BaseCohortsName, "_set")),
-  cohortCountRef = insertTable(attr(new_infection, "cohort_count"), cdm, paste0(BaseCohortsName, "_count"))
+  cohortCountRef = insertTable(attr(new_infection, "cohort_count"), cdm, paste0(BaseCohortsName, "_count")),
+  overwrite = TRUE
 )
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
@@ -112,7 +113,8 @@ attr(longcovid, "cohort_count") <- getCohortCount(longcovid)
 cdm[[LongCovidCohortsName]] <- newGeneratedCohortSet(
   cohortRef = computeQuery(longcovid, LongCovidCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
   cohortSetRef = insertTable(attr(longcovid, "cohort_set"), cdm, paste0(LongCovidCohortsName, "_set")),
-  cohortCountRef = insertTable(attr(longcovid, "cohort_count"), cdm, paste0(LongCovidCohortsName, "_count"))
+  cohortCountRef = insertTable(attr(longcovid, "cohort_count"), cdm, paste0(LongCovidCohortsName, "_count")),
+  overwrite = TRUE
 )
 
 cdm <- cdmFromCon(db, cdm_database_schema, writeSchema = results_database_schema,
@@ -209,7 +211,8 @@ if(vaccine_data && db.name != "CPRDGold") {
     cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
       cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
       cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
-      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count")),
+      overwrite = TRUE
     )
     
   } else {
@@ -293,7 +296,8 @@ if(vaccine_data && db.name != "CPRDGold") {
     cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
       cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
       cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
-      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+      cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count")),
+      overwrite = TRUE
     )
     
   }
@@ -389,7 +393,8 @@ if(vaccine_data && db.name != "CPRDGold") {
   cdm[[VaccCohortsName]] <- newGeneratedCohortSet(
     cohortRef = computeQuery(vacc_all, VaccCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
     cohortSetRef = insertTable(attr(vacc_all, "cohort_set"), cdm, paste0(VaccCohortsName, "_set")),
-    cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count"))
+    cohortCountRef = insertTable(attr(vacc_all, "cohort_count"), cdm, paste0(VaccCohortsName, "_count")),
+    overwrite = TRUE
   )
   
 }
@@ -459,7 +464,8 @@ attr(overlapip, "cohort_count") <- getCohortCount(overlapip)
 cdm[[OverlapCohortsName]] <- newGeneratedCohortSet(
   cohortRef = computeQuery(overlapip, OverlapCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
   cohortSetRef = insertTable(attr(overlapip, "cohort_set"), cdm, paste0(OverlapCohortsName, "_set")),
-  cohortCountRef = insertTable(attr(overlapip, "cohort_count"), cdm, paste0(OverlapCohortsName, "_count"))
+  cohortCountRef = insertTable(attr(overlapip, "cohort_count"), cdm, paste0(OverlapCohortsName, "_count")),
+  overwrite = TRUE
 )
 
 if(vaccine_data) {
@@ -493,7 +499,8 @@ hucohorts <- cdm[[InitialCohortsName]] %>%
   cdm[[HUCohortsName]] <- newGeneratedCohortSet(
     cohortRef = computeQuery(hucohorts, HUCohortsName, FALSE, attr(cdm, "write_schema"), TRUE),
     cohortSetRef = insertTable(attr(hucohorts, "cohort_set"), cdm, paste0(HUCohortsName, "_set")),
-    cohortCountRef = insertTable(attr(hucohorts, "cohort_count"), cdm, paste0(HUCohortsName, "_count"))
+    cohortCountRef = insertTable(attr(hucohorts, "cohort_count"), cdm, paste0(HUCohortsName, "_count")),
+    overwrite = TRUE
   )
   
 

@@ -482,7 +482,9 @@ if(vaccine_data) {
 # HEALTHCARE UTILISATION COHORTS
   # Get Healthcare Utilisation outcomes for clustering
 hucohorts <- cdm[[InitialCohortsName]] %>%
-  dplyr::filter(cohort_definition_id %in% c(33:36))
+  dplyr::filter(cohort_definition_id %in% c(33:36)) %>%
+  dplyr::mutate(cohort_definition_id = cohort_definition_id - 32) %>%
+computeQuery()
   
   names_final_cohorts <- rbind(names_final_cohorts,
                                dplyr::tibble(table_name = HUCohortsName,

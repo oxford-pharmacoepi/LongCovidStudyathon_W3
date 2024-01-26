@@ -566,7 +566,7 @@ names_symptoms <- names_final_cohorts %>%
   dplyr::select(cohort_definition_id, cohort_name) %>% 
   dplyr::distinct() %>% computeQuery()
 
-symptoms_LC <- symptoms_LC %>% addDemographics(cdm, futureObservation = FALSE, priorHistory = FALSE) %>% 
+symptoms_LC <- symptoms_LC %>% addDemographics(cdm, futureObservation = FALSE, priorObservation = FALSE) %>% 
   computeQuery()
 symptoms_LC <- symptoms_LC %>% 
   dplyr::left_join(names_symptoms, 

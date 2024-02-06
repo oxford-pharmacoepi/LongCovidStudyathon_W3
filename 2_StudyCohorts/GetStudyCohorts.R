@@ -694,5 +694,11 @@ if(vaccine_data) {
     computeQuery()
 }
 
-computeQuery(data_LCA, name = clusterCohortName,  temporary = FALSE, schema = results_database_schema, overwrite = TRUE)
+data_LCA <- data_LCA %>%
+  dplyr::relocate("cohort_definition_id" , .after = "subject_id") %>%
+  dplyr::relocate("cohort_start_date", .after = "cohort_definition_id") %>%
+  dplyr::relocate("cohort_end_date", .after = "cohort_start_date")
+
+computeQuery(data_LCA, name = clusterCohortName,  temporary = FALSE, 
+             schema = results_database_schema, overwrite = TRUE)
 
